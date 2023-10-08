@@ -1,0 +1,8 @@
+services:
+  yshop-app:
+    build: .
+    image: "yshop"
+    container_name: "yshop-app"
+    entrypoint: ["uvicorn", "--host=0.0.0.0", "main:app", "--reload"]
+    ports:
+      - "8000:8000"
