@@ -10,8 +10,9 @@ fastapi = "^0.103.2"
 uvicorn = {extras = ["standard"], version = "^0.23.2"}
 pre-commit = "^3.4.0"
 SQLAlchemy = "^2.0.21"
-
-[tool.poetry.dev-dependencies]
+alembic = "^1.12.1"
+Werkzeug = "^3.0.1"
+asyncpg = "^0.28.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
