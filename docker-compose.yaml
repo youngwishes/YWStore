@@ -9,6 +9,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - ./src:/src
 
   postgres:
     image: postgres

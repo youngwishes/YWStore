@@ -7,3 +7,5 @@ RUN pip install poetry && poetry config virtualenvs.create false && poetry insta
 COPY src ./src/
 
 WORKDIR ./src/
+
+ENV PYTHONPATH=/
