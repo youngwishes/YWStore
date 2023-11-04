@@ -1,10 +1,13 @@
 from fastapi import FastAPI
-from src.core.sql import Base, engine
+from contextlib import asynccontextmanager
 
 
-Base.metadata.create_all(bind=engine)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
 
-app = FastAPI()
+
+app = FastAPI(debug=True, description="Diploma")
 
 
 @app.get("/")
