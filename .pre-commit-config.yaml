@@ -22,7 +22,7 @@ repos:
     rev: v2.0.4
     hooks:
     -   id: autopep8
-        args: [--exclude=alembic]
+        args: [src]
 -   repo: https://github.com/PyCQA/flake8
     rev: 6.1.0
     hooks:
