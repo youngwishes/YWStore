@@ -1,0 +1,8 @@
+POSTGRES_USER=
+
+POSTGRES_DB=
+
+POSTGRES_PASSWORD=
+
+# Name of db in docker-compose
+DB_HOST=yshop-postgres
