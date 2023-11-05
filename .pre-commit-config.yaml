@@ -18,11 +18,6 @@ repos:
     hooks:
     -   id: pyupgrade
         args: [--py38-plus]
--   repo: https://github.com/hhatto/autopep8
-    rev: v2.0.4
-    hooks:
-    -   id: autopep8
-        args: [--exclude=alembic/, --diff]
 -   repo: https://github.com/PyCQA/flake8
     rev: 6.1.0
     hooks:

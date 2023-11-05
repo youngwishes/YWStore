@@ -1,5 +1,5 @@
-from src.settings.defaults import DB_URL
-from src.core.users.models import SQLModel
+from src.settings.defaults import POSTGRES_URL
+from src.core.users.models import Base
 import asyncio
 from logging.config import fileConfig
 
@@ -23,8 +23,8 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 
-target_metadata = SQLModel.metadata
-config.set_main_option("sqlalchemy.url", DB_URL)
+target_metadata = Base.metadata
+config.set_main_option("sqlalchemy.url", POSTGRES_URL)
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
