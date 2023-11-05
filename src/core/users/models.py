@@ -1,9 +1,9 @@
-from src.core.sql.database import SQLModel
+from src.core.sql.database import Base
 from sqlalchemy import Column, String, Integer, DateTime, func
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
-class User(SQLModel):
+class User(Base):
     __tablename__ = "user"
 
     id = Column(Integer, primary_key=True, index=True)

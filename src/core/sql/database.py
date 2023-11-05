@@ -1,10 +1,9 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from src.settings import defaults
-from sqlalchemy import URL
-from sqlalchemy.exc import DatabaseError
+from sqlalchemy import URL, create_engine
 
-SQLModel = declarative_base()
+Base = declarative_base()
 
 SQLALCHEMY_DATABASE_URL = URL.create(
     drivername=defaults.POSTGRES_DRIVER,
@@ -14,25 +13,12 @@ SQLALCHEMY_DATABASE_URL = URL.create(
     database=defaults.POSTGRES_DB,
 )
 
-engine = create_async_engine(
-    SQLALCHEMY_DATABASE_URL,
-    echo=defaults.SQL_ECHO,
-)
-
-AsyncSessionLocal = sessionmaker(
-    autoflush=False,
-    autocommit=False,
-    bind=engine,
-    class_=AsyncSession,
+engine = AsyncEngine(
+    create_engine(SQLALCHEMY_DATABASE_URL, echo=defaults.SQL_ECHO, future=True),
 )
 
 
 async def get_db() -> AsyncSession:
-    db = AsyncSessionLocal()
-    try:
-        yield db
-    except DatabaseError as exc:
-        # TODO заменить на нормальное логирование
-        print(f"Python says:: {exc}")
-    finally:
-        await db.close()
+    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async with async_session() as session:
+        yield session
