@@ -9,7 +9,7 @@ services:
     ports:
       - "8080:8000"
     volumes:
-      - ./src:/usr/src/app/src
+      - ./:/usr/src/app
     depends_on:
       yshop-postgres:
         condition: service_healthy
