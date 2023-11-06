@@ -1,22 +1,35 @@
+from sqlalchemy.orm import Mapped, mapped_column
+from datetime import datetime
 from src.core.sql.database import Base
-from sqlalchemy import Column, String, Integer, DateTime, func
-from werkzeug.security import generate_password_hash, check_password_hash
+from fastapi_users.db import SQLAlchemyBaseUserTable
+from sqlalchemy import String, Integer, DateTime, Boolean, func
 
 
-class User(Base):
-    __tablename__ = "user"
-
-    id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String(128), nullable=True)
-    last_name = Column(String(128), nullable=True)
-    username = Column(String(128), nullable=False, unique=True, index=True)
-    email = Column(String(320), nullable=False, unique=True, index=True)
-    joined_date = Column(DateTime(timezone=True), server_default=func.now())
-    phone_number = Column(String(16), unique=True, index=True)
-    password_hash = Column(String(128))
-
-    def set_password(self, password: str) -> None:
-        self.password_hash = generate_password_hash(password=password)
-
-    def check_password(self, password: str) -> bool:
-        return check_password_hash(pwhash=self.password_hash, password=password)
+class User(SQLAlchemyBaseUserTable[int], Base):
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
+    first_name: Mapped[str] = mapped_column(String(length=64), nullable=True)
+    last_name: Mapped[str] = mapped_column(String(length=64), nullable=True)
+    middle_name: Mapped[str] = mapped_column(String(length=64), nullable=True)
+    email: Mapped[str] = mapped_column(
+        String(length=320),
+        unique=True,
+        index=True,
+        nullable=False,
+    )
+    hashed_password: Mapped[str] = mapped_column(String(length=1024), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    joined_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+    last_login: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        onupdate=func.now(),
+        nullable=True,
+    )
