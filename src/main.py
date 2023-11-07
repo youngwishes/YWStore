@@ -1,5 +1,10 @@
 from fastapi import FastAPI, Depends
-from src.core.users.auth import auth_router, register_router, fastapi_users
+from src.core.users.auth import (
+    auth_router,
+    register_router,
+    users_router,
+    fastapi_users,
+)
 from src.core.users.models import User
 from src.core.config import get_settings
 
@@ -21,6 +26,7 @@ app = YshopAPI(
 
 app.include_router(auth_router, tags=["/auth"], prefix="/auth/jwt")
 app.include_router(register_router, tags=["/auth"], prefix="/auth")
+app.include_router(users_router, tags=["/users"], prefix="/users")
 
 current_user = fastapi_users.current_user()
 

@@ -30,6 +30,8 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     )
     last_login: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        onupdate=func.now(),
         nullable=True,
     )
+
+    async def to_json(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
