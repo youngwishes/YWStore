@@ -11,7 +11,7 @@ class YshopBaseSettings(BaseSettings):
     BASE_API_PREFIX: str = f"/api/v{API_VERSION_INT}"
     BASE_DIR: str = str(Path().absolute())
 
-    class Config:
+    class ConfigDict:
         extra = "allow"
         env_file = ".env"
         case_sensitive = True
@@ -21,7 +21,7 @@ class PGSettings(YshopBaseSettings):
     POSTGRES_DB: str = Field("Yshop", title="Postgres DB name")
     POSTGRES_USER: str = Field("Yshop", title="Postgres DB user")
     POSTGRES_PASSWORD: str = Field("Yshop", title="Postgres DB password")
-    POSTGRES_HOST: str = Field("localhost", title="Postgres DB host")
+    POSTGRES_HOST: str = Field("yshop-postgres", title="Postgres DB host")
     POSTGRES_DRIVER: str = "postgresql+asyncpg"
 
     @property
