@@ -17,6 +17,8 @@ asyncio = "^3.4.3"
 psycopg2-binary = "^2.9.9"
 pydantic-settings = "^2.0.3"
 fastapi-users = {extras = ["sqlalchemy"], version = "^12.1.2"}
+pytest = "^7.4.3"
+httpx = "^0.25.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
