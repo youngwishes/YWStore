@@ -6,7 +6,7 @@ from typing import Union
 
 
 class YshopBaseSettings(BaseSettings):
-    PROJECT_NAME: str = "Yshop"
+    PROJECT_NAME: str = "YShop"
     API_VERSION_INT: int = 1
     BASE_API_PREFIX: str = f"/api/v{API_VERSION_INT}"
     BASE_DIR: str = str(Path().absolute())
@@ -18,9 +18,9 @@ class YshopBaseSettings(BaseSettings):
 
 
 class PGSettings(YshopBaseSettings):
-    POSTGRES_DB: str = Field("Yshop", title="Postgres DB name")
-    POSTGRES_USER: str = Field("Yshop", title="Postgres DB user")
-    POSTGRES_PASSWORD: str = Field("Yshop", title="Postgres DB password")
+    POSTGRES_DB: str = Field("YShop", title="Postgres DB name")
+    POSTGRES_USER: str = Field("YShop", title="Postgres DB user")
+    POSTGRES_PASSWORD: str = Field("YShop", title="Postgres DB password")
     POSTGRES_HOST: str = Field("yshop-postgres", title="Postgres DB host")
     POSTGRES_DRIVER: str = "postgresql+asyncpg"
 
