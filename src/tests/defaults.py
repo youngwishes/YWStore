@@ -6,7 +6,7 @@ TEST_DB_NAME = "test_db"
 
 SQLALCHEMY_DATABASE_TEST_URI = (
     f"{settings.POSTGRES_DRIVER}://"
-    f"{settings.POSTGRES_USER}:{settings.POSTGRES_DRIVER}"
+    f"{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}"
     f"@{settings.POSTGRES_HOST}/{TEST_DB_NAME}"
 )
 
