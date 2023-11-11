@@ -1,7 +1,13 @@
+from src.core.config import get_settings
+
+settings = get_settings(db_only=True)
+
 TEST_DB_NAME = "test_db"
 
 SQLALCHEMY_DATABASE_TEST_URI = (
-    f"postgresql+asyncpg://Yshop:Yshop@yshop-postgres/{TEST_DB_NAME}"
+    f"{settings.POSTGRES_DRIVER}://"
+    f"{settings.POSTGRES_USER}:{settings.POSTGRES_DRIVER}"
+    f"@{settings.POSTGRES_HOST}/{TEST_DB_NAME}"
 )
 
 HOST_URL = "http://0.0.0.0:8000/"
