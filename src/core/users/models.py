@@ -1,11 +1,16 @@
-from sqlalchemy.orm import Mapped, mapped_column
+from __future__ import annotations
 from datetime import datetime
-from src.core.sql.database import Base
-from fastapi_users.db import SQLAlchemyBaseUserTable
+
 from sqlalchemy import String, Integer, DateTime, Boolean, func
+from sqlalchemy.orm import Mapped, mapped_column
+from fastapi_users.db import SQLAlchemyBaseUserTable
+
+from src.core.sql.database import Base
 
 
 class User(SQLAlchemyBaseUserTable[int], Base):
+    __tablename__ = "users"
+
     id: Mapped[int] = mapped_column(
         Integer,
         primary_key=True,
@@ -33,5 +38,5 @@ class User(SQLAlchemyBaseUserTable[int], Base):
         nullable=True,
     )
 
-    async def to_json(self):
+    def to_json(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
