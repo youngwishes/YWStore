@@ -1,5 +1,3 @@
-../sandbox/docker-compose.yaml
-
 Dockerfile
 
 README.md
@@ -12,6 +10,6 @@ README.md
 
 .mypy_cache
 
-.pytest_cacheвщ
+.pytest_cache
 
 postgres-data
