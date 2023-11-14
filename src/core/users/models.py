@@ -1,14 +1,15 @@
 from __future__ import annotations
 from datetime import datetime
 
-from sqlalchemy import String, Integer, DateTime, Boolean, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String, Integer, DateTime, Boolean, ForeignKey, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from fastapi_users.db import SQLAlchemyBaseUserTable
 
 from src.core.sql.database import Base
+from src.core.mixins import JSONRepresentationMixin
 
 
-class User(SQLAlchemyBaseUserTable[int], Base):
+class User(JSONRepresentationMixin, SQLAlchemyBaseUserTable[int], Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(
@@ -37,6 +38,61 @@ class User(SQLAlchemyBaseUserTable[int], Base):
         DateTime(timezone=True),
         nullable=True,
     )
+    roles: Mapped[list[Role]] = relationship(
+        "UserRoleAssociation",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="joined",
+    )
 
-    def to_json(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+    def __repr__(self) -> str:
+        return self.email
+
+
+class Role(JSONRepresentationMixin, Base):
+    __tablename__ = "roles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(length=64), nullable=False)
+    users: Mapped[list[User]] = relationship(
+        "UserRoleAssociation",
+        back_populates="role",
+        cascade="all, delete-orphan",
+        lazy="joined",
+    )
+
+    def __repr__(self) -> str:
+        return self.name
+
+
+class UserRoleAssociation(JSONRepresentationMixin, Base):
+    __tablename__ = "users_roles"
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("roles.id"),
+        primary_key=True,
+        index=True,
+    )
+    role_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        primary_key=True,
+        index=True,
+    )
+    expire_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    user: Mapped[list[User]] = relationship(
+        "User",
+        back_populates="roles",
+        lazy="joined",
+    )
+    role: Mapped[list[Role]] = relationship(
+        "Role",
+        back_populates="users",
+        lazy="joined",
+    )
+
+    def __repr__(self) -> str:
+        return f"UserRole(user={self.user_id}, role={self.role_id})"
