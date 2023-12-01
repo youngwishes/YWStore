@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 from fastapi import APIRouter, Depends
-from src.apps.company.schemas import CompanyIn, CompanyOut
+from src.apps.company.schemas import CompanyIn, CompanyOut, CompanyOptional
 from src.core.users.auth import current_user
 from src.apps.company.depends import company_service
 from src.core.exceptions import UniqueConstraintError, NotFoundErrorError
@@ -103,7 +103,7 @@ async def company_detail(
 
 
 @company_router.delete(
-    "/{pk}/",
+    "/{pk}",
     description="Удалить компанию",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
@@ -118,6 +118,77 @@ async def delete_company(pk: int, service: CompanyService = Depends(company_serv
     is_deleted = await service.delete_by_pk(pk=pk)
     if not is_deleted:
         raise NotFoundErrorError(
-            detail="Объект с идентификатором %s не был найден" % pk,
+            detail="Компания с идентификатором %s не была найдена" % pk,
             status_code=404,
         )
+
+
+@company_router.put(
+    "/{pk}",
+    description="Обновить учетные данные компании",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "model": CompanyOut,
+            "description": "Учетные данные успешно обновлены",
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": NotFound,
+            "description": "Компания отсутствует в системе",
+        },
+    },
+)
+async def update_company(
+    pk: int,
+    company: CompanyIn,
+    service: CompanyService = Depends(company_service),
+) -> CompanyOut:
+    company_exists = await service.get_by_pk(pk=pk)
+    if not company_exists:
+        raise NotFoundErrorError(
+            detail="Компания с идентификатором %s не была найдена" % pk,
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    if await service.get_by_name(name=company.name):
+        raise UniqueConstraintError(
+            detail="Компания с названием <%s> уже зарегистрирована в системе"
+            % company.name,
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    updated_company = await service.update(pk=pk, data=company)
+    return updated_company
+
+
+@company_router.patch(
+    "/{pk}",
+    description="Обновить учетные данные компании частично",
+    responses={
+        status.HTTP_200_OK: {
+            "model": CompanyOut,
+            "description": "Учетные данные успешно обновлены",
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": NotFound,
+            "description": "Компания отсутствует в системе",
+        },
+    },
+)
+async def update_company_partially(
+    pk: int,
+    company: CompanyOptional,
+    service: CompanyService = Depends(company_service),
+) -> CompanyOut:
+    company_exists = await service.get_by_pk(pk=pk)
+    if not company_exists:
+        raise NotFoundErrorError(
+            detail="Компания с идентификатором %s не была найдена" % pk,
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    if await service.get_by_name(name=company.name):
+        raise UniqueConstraintError(
+            detail="Компания с названием <%s> уже зарегистрирована в системе"
+            % company.name,
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    updated_company = await service.update(pk=pk, data=company, partial=True)
+    return updated_company

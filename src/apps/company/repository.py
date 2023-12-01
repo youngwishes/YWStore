@@ -2,12 +2,12 @@ from __future__ import annotations
 from typing import Sequence, TYPE_CHECKING
 from src.core.interfaces import IRepository
 from src.apps.company.models import Company
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql import select, delete
+from sqlalchemy.sql import select, delete, update
 from datetime import datetime
 
 if TYPE_CHECKING:
     from src.apps.company.schemas import CompanyIn
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class CompanyRepository(IRepository):
@@ -48,3 +48,12 @@ class CompanyRepository(IRepository):
         )
         await self.session.commit()
         return bool(result.rowcount)
+
+    async def update(self, pk: int, data: CompanyIn, partial: bool = False) -> Company:
+        await self.session.execute(
+            update(Company)
+            .where(Company.id == pk)
+            .values(**data.model_dump(exclude_none=partial)),
+        )
+        await self.session.commit()
+        return await self.get_by_pk(pk=pk)

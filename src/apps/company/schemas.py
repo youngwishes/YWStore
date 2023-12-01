@@ -2,6 +2,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 from src.apps.company.enums import CompanyType
 from datetime import datetime
+from src.core.utils import optional
 
 
 class BaseCompany(BaseModel):
@@ -34,3 +35,8 @@ class CompanyOut(BaseCompany):
 
     class ConfigDict:
         from_attributes = True
+
+
+@optional
+class CompanyOptional(BaseCompany):
+    ...

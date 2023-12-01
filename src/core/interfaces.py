@@ -25,6 +25,10 @@ class IRepository(ABC):
     async def delete_by_pk(self, pk):
         """Удалить объект"""
 
+    @abstractmethod
+    async def update(self, pk, data, partial):
+        """Обновить объект"""
+
 
 class IService(ABC):
     @abstractmethod
@@ -46,3 +50,7 @@ class IService(ABC):
     @abstractmethod
     async def delete_by_pk(self, pk):
         """Удалить объект"""
+
+    @abstractmethod
+    async def update(self, pk, data, partial):
+        """Обновить объект"""
