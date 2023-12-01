@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Sequence
 from src.apps.company.models import Company
 
 if TYPE_CHECKING:
-    from src.apps.company.schemas import CompanyIn
+    from src.apps.company.schemas import CompanyIn, CompanyOptional
     from src.apps.company.repository import CompanyRepository
 
 
@@ -31,3 +31,11 @@ class CompanyService(IService):
 
     async def delete_by_pk(self, pk: int) -> bool:
         return await self._repo.delete_by_pk(pk=pk)
+
+    async def update(
+        self,
+        pk: int,
+        data: CompanyIn | CompanyOptional,
+        partial: bool = False,
+    ) -> Company:
+        return await self._repo.update(pk=pk, data=data, partial=partial)
