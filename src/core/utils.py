@@ -13,6 +13,15 @@ def make_field_partial(field: FieldInfo, default: Any = None) -> (Any, FieldInfo
 
 
 def optional(cls: type[BaseModel]) -> type[BaseModel]:
+    """
+    !! Сделает схему опциональной, например если нужно реализовать PATCH-запрос
+    >>> class RequiredSchema:
+    >>>       required_field: str
+
+    >>> @optional
+    >>> class OptionalSchema(RequiredSchema):
+            ...
+    """
     fields_in_partial_mode = {
         field: make_field_partial(info) for field, info in cls.model_fields.items()
     }

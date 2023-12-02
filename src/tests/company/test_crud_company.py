@@ -1,8 +1,15 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
 import pytest
 from fastapi import status
-from src.tests.helpers import make_post_request, get_objects_count, get_object
+from src.main import YshopAPI
+from src.tests.helpers import (
+    make_post_request,
+    get_objects_count,
+    get_object,
+    check_object_data,
+)
 from src.apps.company.models import Company
 
 if TYPE_CHECKING:
@@ -11,44 +18,50 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.anyio
-async def test_register_new_company_status(
+async def test_register_new_company_authorized(
     company_init_data: dict,
-    async_client: AsyncClient,
-    test_app,
-):
-    """Проверяет код ответа когда создается новая компания"""
-    url = test_app.url_path_for("register_company")
-    response = await make_post_request(async_client, url, json=company_init_data)
-    assert response.status_code == status.HTTP_201_CREATED
-
-
-@pytest.mark.anyio
-async def test_register_new_company_count(
+    authorized_client: AsyncClient,
+    test_app: YshopAPI,
     session: AsyncSession,
-    company_init_data: dict,
-    async_client: AsyncClient,
-    test_app,
 ):
-    """Проверяет количество записей в БД"""
-    url = test_app.url_path_for("register_company")
+    """
+    Тест на создание новой компании авторизованным пользователем
+    Проверяет:
+    1. Код ответа
+    2. Количество записей в БД
+    3. Соответствие переданных данных с записью в базе данных
+    """
     count_before = await get_objects_count(Company, session)
-    await make_post_request(async_client, url, json=company_init_data)
+    url = test_app.url_path_for("register_company")
+    response = await make_post_request(authorized_client, url, json=company_init_data)
     count_after = await get_objects_count(Company, session)
+    obj = await get_object(Company, session)
+
+    assert response.status_code == status.HTTP_201_CREATED
     assert count_before + 1 == count_after
+    assert await check_object_data(obj=obj, data=company_init_data)
 
 
 @pytest.mark.anyio
-async def test_register_new_company_data(
-    session: AsyncSession,
+async def test_register_new_company_unauthorized(
     company_init_data: dict,
     async_client: AsyncClient,
-    test_app,
+    test_app: YshopAPI,
+    session: AsyncSession,
 ):
-    """Проверяет корректность создания записи в  БД"""
+    """
+    Тест на создание новой компании неавторизованным пользователем
+    Проверяет:
+    1. Код ответа
+    2. Количество записей в БД
+    3. Соответствие переданных данных с записью в базе данных
+    """
+    count_before = await get_objects_count(Company, session)
     url = test_app.url_path_for("register_company")
     response = await make_post_request(async_client, url, json=company_init_data)
+    count_after = await get_objects_count(Company, session)
     obj = await get_object(Company, session)
-    assert obj.id == response.json()["id"]
-    assert obj.name == response.json()["name"]
-    assert obj.fact_address == response.json()["fact_address"]
-    assert obj.jur_address == response.json()["jur_address"]
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert count_before == count_after
+    assert obj is None

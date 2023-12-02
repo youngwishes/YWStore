@@ -107,6 +107,28 @@ def async_client(test_app: YshopAPI, session: AsyncSession) -> AsyncClient:
 
 
 @pytest.fixture
+async def authorized_client(
+    async_client: AsyncClient,
+    create_test_user: User,
+    get_test_user_data: dict,
+    test_app: YshopAPI,
+) -> AsyncClient:
+    url = app.url_path_for("auth:jwt.login")
+    credentials = {
+        "username": get_test_user_data.get("email"),
+        "password": get_test_user_data.get("password"),
+    }
+    async with async_client as client:
+        response = await client.post(url, data=credentials)
+        access_token = response.json().get("access_token")
+    return AsyncClient(
+        base_url=defaults.HOST_URL,
+        app=test_app,
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+
+@pytest.fixture
 def get_test_user_data() -> dict:
     return {
         "email": defaults.TEST_USER_EMAIL,
@@ -127,5 +149,5 @@ async def create_test_user(
     get_test_user_manager: UserManager,
 ) -> User:
     create_user_schema = UserCreate(**get_test_user_data)
-    user = await get_test_user_manager.create(create_user_schema, safe=True)
+    user = await get_test_user_manager.create(create_user_schema)
     return user
