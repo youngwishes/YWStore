@@ -38,6 +38,4 @@ class YshopSettings(YshopBaseSettings):
 
 
 def get_settings(db_only=False) -> Union[PGSettings, YshopSettings]:
-    if db_only:
-        return PGSettings()
-    return YshopSettings()
+    return PGSettings() if db_only else YshopSettings()
