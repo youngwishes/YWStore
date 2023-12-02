@@ -75,7 +75,7 @@ async def delete_companies(service: CompanyService = Depends(company_service)):
 
 
 @company_router.get(
-    "/{pk}/",
+    "/{pk}",
     status_code=status.HTTP_200_OK,
     description="Детальное представление компании",
     responses={
