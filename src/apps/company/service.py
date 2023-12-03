@@ -32,6 +32,9 @@ class CompanyService(IService):
     async def delete_by_pk(self, pk: int) -> bool:
         return await self._repo.delete_by_pk(pk=pk)
 
+    async def verify_company(self, pk: int, is_verified: bool) -> Company:
+        return await self._repo.verify_company(pk=pk, is_verified=is_verified)
+
     async def update(
         self,
         pk: int,

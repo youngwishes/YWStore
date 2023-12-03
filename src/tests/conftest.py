@@ -6,6 +6,7 @@ import pytest
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text
+from sqlalchemy.pool import NullPool
 
 from src.main import app
 from src.tests import defaults
@@ -23,8 +24,8 @@ if TYPE_CHECKING:
     from src.main import YshopAPI
 
 settings = get_settings(db_only=True)
-
-async_engine = create_async_engine(settings.sqlalchemy_db_uri)
+async_engine_main = create_async_engine(settings.sqlalchemy_db_uri, poolclass=NullPool)
+async_engine_test = create_async_engine(defaults.SQLALCHEMY_DATABASE_TEST_URI)
 
 
 @pytest.fixture(scope="session")
@@ -33,34 +34,22 @@ def anyio_backend() -> str:
 
 
 @pytest.fixture(scope="session")
-async def async_engine_test() -> AsyncGenerator[AsyncEngine]:
-    async with async_engine.connect() as connection:
+async def engine() -> AsyncGenerator[AsyncEngine]:
+    async with async_engine_main.connect() as connection:
         await connection.execute(text("COMMIT;"))
         await connection.execute(text(f"CREATE DATABASE {defaults.TEST_DB_NAME};"))
-    yield create_async_engine(defaults.SQLALCHEMY_DATABASE_TEST_URI)
-    async with async_engine.connect() as connection:
+    async with async_engine_test.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+    yield async_engine_test
+    await async_engine_test.dispose()
+    async with async_engine_main.connect() as connection:
         await connection.execute(text("COMMIT;"))
         await connection.execute(text(f"DROP DATABASE {defaults.TEST_DB_NAME};"))
 
 
 @pytest.fixture(scope="session")
-async def bind(async_engine_test: AsyncEngine) -> AsyncGenerator[AsyncEngine]:
-    async with async_engine_test.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
-    yield async_engine_test
-    async with async_engine_test.begin() as connection:
-        await connection.run_sync(Base.metadata.drop_all)
-    await async_engine_test.dispose()
-
-
-@pytest.fixture(scope="session")
-def async_session_class(bind: AsyncEngine) -> sessionmaker[AsyncSession]:
-    return sessionmaker(
-        bind=bind,
-        class_=AsyncSession,
-        expire_on_commit=False,
-        autoflush=False,
-    )
+def async_session_class(engine: AsyncEngine) -> sessionmaker[AsyncSession]:
+    return sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)  # type: ignore[call-arg]
 
 
 @pytest.fixture(scope="session")
@@ -73,37 +62,35 @@ def test_app(async_session_class: sessionmaker[AsyncSession]) -> YshopAPI:
     return app
 
 
-@pytest.fixture
+@pytest.fixture(scope="function", autouse=True)
 async def session(
     async_session_class: sessionmaker[AsyncSession],
-) -> AsyncGenerator[AsyncSession]:
+) -> AsyncGenerator[AsyncSession, None]:
     async with async_session_class() as session:
-        await session.begin()
         yield session
-        await session.rollback()
         for table in reversed(Base.metadata.sorted_tables):
             await session.execute(text(f"TRUNCATE {table.name} CASCADE;"))
-            await session.commit()
+        await session.commit()
 
 
 @pytest.fixture
 async def get_test_user_db(
     session: AsyncSession,
-) -> AsyncGenerator[SQLAlchemyUserDatabase]:
-    yield SQLAlchemyUserDatabase(session, User)
+) -> AsyncGenerator[SQLAlchemyUserDatabase, None]:
+    yield SQLAlchemyUserDatabase(session, User)  # type: ignore[call-arg]
 
 
 @pytest.fixture
 async def get_test_user_manager(
     get_test_user_db: SQLAlchemyUserDatabase,
-) -> AsyncGenerator[UserManager]:
+) -> AsyncGenerator[UserManager, None]:
     yield UserManager(get_test_user_db)
 
 
 @pytest.fixture
-def async_client(test_app: YshopAPI, session: AsyncSession) -> AsyncClient:
-    """Фикстура session необходима для очистки бд"""
-    return AsyncClient(app=test_app, base_url=defaults.HOST_URL)
+async def async_client(test_app: YshopAPI) -> AsyncClient:
+    async with AsyncClient(app=test_app, base_url=defaults.HOST_URL) as client:
+        yield client
 
 
 @pytest.fixture
@@ -112,20 +99,20 @@ async def authorized_client(
     create_test_user: User,
     get_test_user_data: dict,
     test_app: YshopAPI,
-) -> AsyncClient:
+) -> AsyncGenerator[AsyncClient, None]:
     url = app.url_path_for("auth:jwt.login")
     credentials = {
         "username": get_test_user_data.get("email"),
         "password": get_test_user_data.get("password"),
     }
-    async with async_client as client:
-        response = await client.post(url, data=credentials)
-        access_token = response.json().get("access_token")
-    return AsyncClient(
+    response = await async_client.post(url, data=credentials)
+    access_token = response.json().get("access_token")
+    async with AsyncClient(
         base_url=defaults.HOST_URL,
         app=test_app,
         headers={"Authorization": f"Bearer {access_token}"},
-    )
+    ) as client:
+        yield client
 
 
 @pytest.fixture

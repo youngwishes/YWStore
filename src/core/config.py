@@ -22,6 +22,7 @@ class PGSettings(YshopBaseSettings):
     POSTGRES_USER: str = Field("YShop", title="Postgres DB user")
     POSTGRES_PASSWORD: str = Field("YShop", title="Postgres DB password")
     POSTGRES_HOST: str = Field("yshop-postgres", title="Postgres DB host")
+    POSTGRES_PORT: int = Field(5432, title="Postgres port")
     POSTGRES_DRIVER: str = "postgresql+asyncpg"
 
     @property

@@ -19,8 +19,7 @@ async def test_register_view(
 ):
     """Тест на регистрацию пользователя"""
     url = test_app.url_path_for("register:register")
-    async with async_client as client:
-        response = await client.post(url, json=get_test_user_data)
+    response = await async_client.post(url, json=get_test_user_data)
     assert response.status_code == status.HTTP_201_CREATED
 
 
@@ -35,14 +34,13 @@ async def test_auth_view(
     assert create_test_user.last_login is None
 
     url = test_app.url_path_for("auth:jwt.login")
-    async with async_client as client:
-        response = await client.post(
-            url,
-            data={
-                "username": defaults.TEST_USER_EMAIL,
-                "password": defaults.TEST_USER_PASSWORD,
-            },
-        )
+    response = await async_client.post(
+        url,
+        data={
+            "username": defaults.TEST_USER_EMAIL,
+            "password": defaults.TEST_USER_PASSWORD,
+        },
+    )
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["access_token"]
 

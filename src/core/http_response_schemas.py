@@ -21,4 +21,9 @@ class Unauthorized(BaseErrorModel):
 
 class NotFound(BaseErrorModel):
     class Config:
-        json_schema_extra = {"example": {"detail": "Объект не существует"}}
+        json_schema_extra = {"example": {"detail": "Объект не найден"}}
+
+
+class NotAllowed(BaseErrorModel):
+    class Config:
+        json_schema_extra = {"example": {"detail": "У вас недостаточно прав"}}

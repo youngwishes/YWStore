@@ -1,21 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 from sqlalchemy.sql import func, select
-from httpx import Response, AsyncClient
+
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
-
-
-async def make_post_request(
-    async_client: AsyncClient,
-    url: str,
-    json: dict,
-) -> Response:
-    """Хелпер для пост-запроса"""
-    async with async_client as client:
-        response = await client.post(url=url, json=json)
-    return response
 
 
 async def get_objects_count(model: Any, session: AsyncSession) -> int:
@@ -27,7 +16,11 @@ async def get_objects_count(model: Any, session: AsyncSession) -> int:
 async def get_object(model: Any, session: AsyncSession) -> Any:
     """Хелпер для получения объекта"""
     result = await session.execute(select(model))
-    return result.scalar_one_or_none()
+    obj = result.scalar_one_or_none()
+    if not obj:
+        return None
+    await session.refresh(obj)
+    return obj
 
 
 async def check_object_data(obj: Any, data: dict) -> bool:
@@ -37,7 +30,7 @@ async def check_object_data(obj: Any, data: dict) -> bool:
             if sent_value := data.get(key):
                 if not sent_value == value:
                     print(
-                        f"Sent value is {sent_value}, but in model is {value}",
+                        f"Sent value of '{key}' is {sent_value}, but in model is {value}",
                     )
                     return False
     return True
