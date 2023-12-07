@@ -1,5 +1,7 @@
 from src.core.config import get_settings
 from src.core.users.models import Base
+from src.apps.company.models import Base
+from src.apps.employee.models import Base
 import asyncio
 from logging.config import fileConfig
 

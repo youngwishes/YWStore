@@ -17,9 +17,9 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.anyio
-async def test_register_new_company_authorized(
+async def test_register_new_company_superuser(
     company_init_data: dict,
-    authorized_client: AsyncClient,
+    superuser_client: AsyncClient,
     session: AsyncSession,
 ):
     """
@@ -31,7 +31,7 @@ async def test_register_new_company_authorized(
     """
     count_before = await get_objects_count(Company, session)
     url = app.url_path_for("register_company")
-    response = await authorized_client.post(url, json=company_init_data)
+    response = await superuser_client.post(url, json=company_init_data)
     count_after = await get_objects_count(Company, session)
     obj = await get_object(Company, session)
     assert response.status_code == status.HTTP_201_CREATED
@@ -43,14 +43,14 @@ async def test_register_new_company_authorized(
 @pytest.mark.anyio
 async def test_register_company_with_exists_name(
     company_init_data: dict,
-    authorized_client: AsyncClient,
+    superuser_client: AsyncClient,
     session: AsyncSession,
     create_test_company: Company,
 ):
     """Тест на создание новой компании, имя которой уже содержится в системе"""
     count_before = await get_objects_count(Company, session)
     url = app.url_path_for("register_company")
-    response = await authorized_client.post(url, json=company_init_data)
+    response = await superuser_client.post(url, json=company_init_data)
     count_after = await get_objects_count(Company, session)
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert count_before == count_after
@@ -174,7 +174,7 @@ async def test_partially_update_company_unauthorized(
 
 @pytest.mark.anyio
 async def test_companies_delete(
-    authorized_client: AsyncClient,
+    superuser_client: AsyncClient,
     session: AsyncSession,
     create_test_company_many: int,
 ):
@@ -182,7 +182,7 @@ async def test_companies_delete(
     url = app.url_path_for("delete_companies")
     count_objects_before = await get_objects_count(Company, session)
     assert count_objects_before != 0
-    response = await authorized_client.delete(url)
+    response = await superuser_client.delete(url)
     assert response.status_code == status.HTTP_204_NO_CONTENT
     count_objects_after = await get_objects_count(Company, session)
     assert count_objects_after == 0
@@ -206,7 +206,7 @@ async def test_companies_delete_unauthorized(
 
 @pytest.mark.anyio
 async def test_company_delete(
-    authorized_client: AsyncClient,
+    superuser_client: AsyncClient,
     session: AsyncSession,
     random_company: Company,
 ):
@@ -214,7 +214,7 @@ async def test_company_delete(
     url = app.url_path_for("delete_company", pk=random_company.id)
     count_objects_before = await get_objects_count(Company, session)
     assert count_objects_before != 0
-    response = await authorized_client.delete(url)
+    response = await superuser_client.delete(url)
     count_objects_after = await get_objects_count(Company, session)
     assert response.status_code == status.HTTP_204_NO_CONTENT
     assert count_objects_before == count_objects_after + 1
@@ -263,14 +263,29 @@ async def test_company_detail(
 
 @pytest.mark.anyio
 async def test_verify_company(
-    authorized_client: AsyncClient,
+    superuser_client: AsyncClient,
     session: AsyncSession,
     random_company: Company,
 ):
     url = app.url_path_for("verify_company", pk=random_company.id)
     assert random_company.is_verified
-    response = await authorized_client.patch(url, json={"is_verified": False})
+    response = await superuser_client.patch(url, json={"is_verified": False})
     await session.refresh(random_company)
 
     assert response.status_code == status.HTTP_200_OK
     assert random_company.is_verified is False
+
+
+@pytest.mark.anyio
+async def test_verify_company_unauthorized(
+    async_client: AsyncClient,
+    session: AsyncSession,
+    random_company: Company,
+):
+    url = app.url_path_for("verify_company", pk=random_company.id)
+    assert random_company.is_verified
+    response = await async_client.patch(url, json={"is_verified": False})
+    await session.refresh(random_company)
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert random_company.is_verified

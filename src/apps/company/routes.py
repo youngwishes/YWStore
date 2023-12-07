@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 from fastapi import APIRouter, Depends, Body
 from src.apps.company.schemas import CompanyIn, CompanyOut, CompanyOptional
-from src.core.users.auth import current_user
+from src.core.users.auth import current_user, superuser
 from src.apps.company.depends import company_service
 from src.core.exceptions import UniqueConstraintError, NotFoundErrorError
 from src.core.http_response_schemas import (
@@ -42,7 +42,7 @@ company_router = APIRouter()
 )
 async def register_company(
     company: CompanyIn,
-    user: User = Depends(current_user),
+    user: User = Depends(superuser),
     service: CompanyService = Depends(company_service),
 ) -> CompanyOut:
     if await service.get_by_name(name=company.name):
@@ -73,7 +73,7 @@ async def companies_list(
 )
 async def delete_companies(
     service: CompanyService = Depends(company_service),
-    user: User = Depends(current_user),
+    user: User = Depends(superuser),
 ):
     await service.delete()
 
@@ -121,7 +121,7 @@ async def company_detail(
 async def delete_company(
     pk: int,
     service: CompanyService = Depends(company_service),
-    user: User = Depends(current_user),
+    user: User = Depends(superuser),
 ):
     is_deleted = await service.delete_by_pk(pk=pk)
     if not is_deleted:
@@ -209,7 +209,7 @@ async def update_company_partially(
     responses={
         status.HTTP_200_OK: {
             "model": CompanyOut,
-            "description": "Компания верифицирована",
+            "description": "Статус верификации успешно изменен",
         },
         status.HTTP_404_NOT_FOUND: {
             "model": NotFound,
@@ -228,10 +228,46 @@ async def update_company_partially(
 async def verify_company(
     pk: int,
     is_verified: bool = Body(default=True, embed=True),
-    user: User = Depends(current_user),
+    user: User = Depends(superuser),
     service: CompanyService = Depends(company_service),
 ) -> CompanyOut:
-    company = await service.verify_company(pk=pk, is_verified=is_verified)
+    company = await service.update_is_verified(pk=pk, is_verified=is_verified)
+    if not company:
+        raise NotFoundErrorError(
+            detail="Компания с идентификатором %s не была найдена" % pk,
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    return company
+
+
+@company_router.patch(
+    "/{pk}/hide",
+    responses={
+        status.HTTP_200_OK: {
+            "model": CompanyOut,
+            "description": "Отображение компании в системе изменено",
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": NotFound,
+            "description": "Компания не найдена",
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": Unauthorized,
+            "description": "Не авторизован",
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": NotAllowed,
+            "description": "У вас недостаточно прав",
+        },
+    },
+)
+async def hide_company(
+    pk: int,
+    is_hidden: bool = Body(default=True, embed=True),
+    user: User = Depends(superuser),
+    service: CompanyService = Depends(company_service),
+) -> CompanyOut:
+    company = await service.update_is_hidden(pk=pk, is_hidden=is_hidden)
     if not company:
         raise NotFoundErrorError(
             detail="Компания с идентификатором %s не была найдена" % pk,

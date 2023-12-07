@@ -1,14 +1,12 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from src.core.users.auth import (
     auth_router,
     register_router,
     users_router,
-    fastapi_users,
 )
-from src.core.users.models import User
 from src.core.config import get_settings
 from src.apps.company.routes import company_router
-
+from src.apps.employee.routes import employee_router
 
 description = """
 # Статус - в разработке ⚙️
@@ -47,15 +45,4 @@ app.include_router(auth_router, tags=["/auth"], prefix="/auth/jwt")
 app.include_router(register_router, tags=["/auth"], prefix="/auth")
 app.include_router(users_router, tags=["/users"], prefix="/users")
 app.include_router(company_router, tags=["/company"], prefix="/company")
-
-current_user = fastapi_users.current_user()
-
-
-@app.get("/protected-route")
-async def protected_route(user: User = Depends(current_user)):
-    return f"Hello, {user.email}"
-
-
-@app.get("/")
-async def index():
-    return {"diploma": "started"}
+app.include_router(employee_router, tags=["/employees"], prefix="/employees")
