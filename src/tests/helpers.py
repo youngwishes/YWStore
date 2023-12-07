@@ -16,7 +16,7 @@ async def get_objects_count(model: Any, session: AsyncSession) -> int:
 async def get_object(model: Any, session: AsyncSession) -> Any:
     """Хелпер для получения объекта"""
     result = await session.execute(select(model))
-    obj = result.scalar_one_or_none()
+    obj = result.unique().scalar_one_or_none()
     if not obj:
         return None
     await session.refresh(obj)

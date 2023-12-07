@@ -262,13 +262,13 @@ async def test_company_detail(
 
 
 @pytest.mark.anyio
-async def test_verify_company(
+async def test_verify_company_superuser(
     superuser_client: AsyncClient,
     session: AsyncSession,
     random_company: Company,
 ):
     url = app.url_path_for("verify_company", pk=random_company.id)
-    assert random_company.is_verified
+    assert random_company.is_verified is True
     response = await superuser_client.patch(url, json={"is_verified": False})
     await session.refresh(random_company)
 
@@ -277,15 +277,44 @@ async def test_verify_company(
 
 
 @pytest.mark.anyio
-async def test_verify_company_unauthorized(
-    async_client: AsyncClient,
+async def test_verify_company_authorized(
+    authorized_client: AsyncClient,
     session: AsyncSession,
     random_company: Company,
 ):
     url = app.url_path_for("verify_company", pk=random_company.id)
-    assert random_company.is_verified
-    response = await async_client.patch(url, json={"is_verified": False})
+    assert random_company.is_verified is True
+    response = await authorized_client.patch(url, json={"is_verified": False})
     await session.refresh(random_company)
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert random_company.is_verified is True
 
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert random_company.is_verified
+
+@pytest.mark.anyio
+async def test_hide_company_authorized(
+    authorized_client: AsyncClient,
+    session: AsyncSession,
+    random_company: Company,
+):
+    """Тест на скрытие компании из системы"""
+    assert random_company.is_hidden is False
+    url = app.url_path_for("hide_company", pk=random_company.id)
+    response = await authorized_client.patch(url, json={"is_hidden": True})
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    await session.refresh(random_company)
+    assert random_company.is_hidden is False
+
+
+@pytest.mark.anyio
+async def test_hide_company_superuser(
+    superuser_client: AsyncClient,
+    session: AsyncSession,
+    random_company: Company,
+):
+    """Тест на скрытие компании из системы суперпользователем"""
+    assert random_company.is_hidden is False
+    url = app.url_path_for("hide_company", pk=random_company.id)
+    response = await superuser_client.patch(url, json={"is_hidden": True})
+    assert response.status_code == status.HTTP_200_OK
+    await session.refresh(random_company)
+    assert random_company.is_hidden is True
