@@ -9,7 +9,7 @@ class UniqueConstraint(BaseErrorModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "detail": "Компания с названием $COMPANY_NAME уже существует в системе",
+                "detail": "Ошибка при проверке на уникальность",
             },
         }
 

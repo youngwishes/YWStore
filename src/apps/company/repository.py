@@ -6,6 +6,7 @@ from sqlalchemy.sql import select, delete, update
 from datetime import datetime
 from sqlalchemy.sql.expression import false, true
 
+
 if TYPE_CHECKING:
     from src.apps.company.schemas import CompanyIn, CompanyOptional
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,9 +28,9 @@ class CompanyRepository(IRepository):
         return results.scalars().all()
 
     async def create(self, in_model: CompanyIn) -> Company:
-        company = Company(
-            **in_model.model_dump(),
-            rating=None,
+        company = self.model(
+            **in_model.model_dump(),  # type: ignore[call-arg]
+            rating=None,  # type: ignore[call-arg]
             updated_at=datetime.now(),  # type: ignore[call-arg]
         )
         self.session.add(company)
@@ -70,9 +71,9 @@ class CompanyRepository(IRepository):
         partial: bool = False,
     ) -> Company:
         updated_company = await self.session.execute(
-            update(Company)
-            .returning(Company)
-            .where(Company.id == pk)
+            update(self.model)
+            .returning(self.model)
+            .where(self.model.id == pk)
             .values(
                 **data.model_dump(exclude_none=partial),
                 updated_at=datetime.now(),
@@ -81,12 +82,22 @@ class CompanyRepository(IRepository):
         await self.session.commit()
         return updated_company.scalar_one_or_none()
 
-    async def verify_company(self, pk: int, is_verified: bool):
+    async def update_is_verified(self, pk: int, is_verified: bool) -> Company | None:
         verified_company = await self.session.execute(
             update(self.model)
             .returning(self.model)
-            .where(Company.id == pk)
+            .where(self.model.id == pk)
             .values(is_verified=is_verified),
         )
         await self.session.commit()
         return verified_company.scalar_one_or_none()
+
+    async def update_is_hidden(self, pk: int, is_hidden: bool) -> Company | None:
+        hidden_company = await self.session.execute(
+            update(self.model)
+            .returning(self.model)
+            .where(self.model.id == pk)
+            .values(is_hidden=is_hidden),
+        )
+        await self.session.commit()
+        return hidden_company.scalar_one_or_none()

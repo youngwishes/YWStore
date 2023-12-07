@@ -23,4 +23,4 @@ repos:
     hooks:
     -   id: flake8
         name: flake8 except __init__.py
-        args: [--exclude=__init__.py, --max-line-length=128]
+        args: [--exclude=alembic/env.py, --max-line-length=128]

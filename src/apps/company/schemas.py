@@ -33,6 +33,7 @@ class CompanyOut(BaseCompany):
     updated_at: datetime = Field(..., title="Дата последнего обновления")
     rating: float | None = Field(..., title="Рейтинг")
     is_verified: bool = Field(..., title="Верифицирована")
+    is_hidden: bool = Field(..., title="Скрыта")
 
     class ConfigDict:
         from_attributes = True

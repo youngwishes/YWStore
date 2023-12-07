@@ -116,6 +116,18 @@ async def authorized_client(
 
 
 @pytest.fixture
+async def superuser_client(
+    authorized_client: AsyncClient,
+    create_test_user: User,
+    session: AsyncSession,
+):
+    create_test_user.is_superuser = True
+    session.add(create_test_user)
+    await session.commit()
+    return authorized_client
+
+
+@pytest.fixture
 def get_test_user_data() -> dict:
     return {
         "email": defaults.TEST_USER_EMAIL,
