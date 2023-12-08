@@ -8,6 +8,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text
 from sqlalchemy.pool import NullPool
 
+from src.apps.company.enums import CompanyType
+from src.apps.company.models import Company
 from src.main import app
 from src.tests import defaults
 from src.core.config import get_settings
@@ -107,12 +109,8 @@ async def authorized_client(
     }
     response = await async_client.post(url, data=credentials)
     access_token = response.json().get("access_token")
-    async with AsyncClient(
-        base_url=defaults.HOST_URL,
-        app=test_app,
-        headers={"Authorization": f"Bearer {access_token}"},
-    ) as client:
-        yield client
+    async_client.headers = {"Authorization": f"Bearer {access_token}"}
+    yield async_client
 
 
 @pytest.fixture
@@ -150,3 +148,26 @@ async def create_test_user(
     create_user_schema = UserCreate(**get_test_user_data)
     user = await get_test_user_manager.create(create_user_schema)
     return user
+
+
+@pytest.fixture
+def company_init_data():
+    return {
+        "name": "Test",
+        "director_fullname": "Test",
+        "type": CompanyType.LLC,
+        "jur_address": {"Country": "Russian Federation"},
+        "fact_address": {"Country": "Russian Federation"},
+    }
+
+
+@pytest.fixture
+async def create_test_company(
+    company_init_data: dict,
+    session: AsyncSession,
+) -> Company:
+    company = Company(**company_init_data, is_verified=True, is_hidden=False)  # type: ignore[call-arg]
+    session.add(company)
+    await session.commit()
+    await session.refresh(company)
+    yield company

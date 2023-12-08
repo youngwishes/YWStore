@@ -8,17 +8,6 @@ import random
 
 
 @pytest.fixture
-def company_init_data():
-    return {
-        "name": "Test",
-        "director_fullname": "Test",
-        "type": CompanyType.LLC,
-        "jur_address": {"Country": "Russian Federation"},
-        "fact_address": {"Country": "Russian Federation"},
-    }
-
-
-@pytest.fixture
 def update_company_data():
     return {
         "name": "Test (Updated)",
@@ -36,18 +25,6 @@ def update_partial_company_data():
         "type": CompanyType.INDIVIDUAL,
         "fact_address": {"Country": "Russian Federation (Updated)"},
     }
-
-
-@pytest.fixture
-async def create_test_company(
-    company_init_data: dict,
-    session: AsyncSession,
-) -> Company:
-    company = Company(**company_init_data, is_verified=True, is_hidden=False)  # type: ignore[call-arg]
-    session.add(company)
-    await session.commit()
-    await session.refresh(company)
-    yield company
 
 
 @pytest.fixture
