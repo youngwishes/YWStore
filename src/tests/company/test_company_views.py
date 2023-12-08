@@ -268,13 +268,7 @@ async def test_verify_company(
 ):
     url = app.url_path_for("verify_company", pk=random_company.id)
     assert random_company.is_verified
-    response = (
-        await authorized_client.patch(url, json={"is_verified": False}),
-        authorized_client,
-        authorized_client,
-        authorized_client,
-        authorized_client,
-    )
+    response = await authorized_client.patch(url, json={"is_verified": False})
     await session.refresh(random_company)
 
     assert response.status_code == status.HTTP_200_OK
