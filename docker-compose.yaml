@@ -1,22 +1,22 @@
 version: "3.8"
 
 services:
-  yshop-web:
+  ystore-web:
     build: .
-    image: "yshop-web"
-    container_name: "yshop-web"
-    command: uvicorn src.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+    image: "ystore-web"
+    container_name: "ystore-web"
+    command: ./entrypoint.sh
     ports:
       - "8080:8000"
     volumes:
       - ./:/usr/src/app
     depends_on:
-      yshop-postgres:
+      ystore-postgres:
         condition: service_healthy
 
-  yshop-postgres:
+  ystore-postgres:
     image: postgres
-    container_name: "yshop-postgres"
+    container_name: "ystore-postgres"
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
