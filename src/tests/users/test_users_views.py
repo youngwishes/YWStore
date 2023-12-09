@@ -6,7 +6,7 @@ from src.tests import defaults
 
 if TYPE_CHECKING:
     from httpx import AsyncClient
-    from src.main import YStore
+    from src.main import YStoreAPI
     from src.core.users.models import User
     from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 @pytest.mark.anyio
 async def test_register_view(
     async_client: AsyncClient,
-    test_app: YStore,
+    test_app: YStoreAPI,
     get_test_user_data: dict,
 ):
     """Тест на регистрацию пользователя"""
@@ -26,7 +26,7 @@ async def test_register_view(
 @pytest.mark.anyio
 async def test_auth_view(
     async_client: AsyncClient,
-    test_app: YStore,
+    test_app: YStoreAPI,
     create_test_user: User,
     session: AsyncSession,
 ):

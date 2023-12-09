@@ -27,13 +27,13 @@ description = """
 settings = get_settings()
 
 
-class YStore(FastAPI):
+class YStoreAPI(FastAPI):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.router.prefix = settings.BASE_API_PREFIX
 
 
-app = YStore(
+app = YStoreAPI(
     debug=settings.DEBUG,
     description=description,
     title=settings.PROJECT_NAME,
