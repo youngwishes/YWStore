@@ -23,7 +23,7 @@ from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncEngine
-    from src.main import YStoreAPI
+    from src.main import YWStoreAPI
 
 settings = get_settings(db_only=True)
 async_engine_main = create_async_engine(settings.sqlalchemy_db_uri, poolclass=NullPool)
@@ -55,7 +55,7 @@ def async_session_class(engine: AsyncEngine) -> sessionmaker[AsyncSession]:
 
 
 @pytest.fixture(scope="session")
-def test_app(async_session_class: sessionmaker[AsyncSession]) -> YStoreAPI:
+def test_app(async_session_class: sessionmaker[AsyncSession]) -> YWStoreAPI:
     async def get_test_session():
         async with async_session_class() as session:
             yield session
@@ -90,7 +90,7 @@ async def get_test_user_manager(
 
 
 @pytest.fixture
-async def async_client(test_app: YStoreAPI) -> AsyncClient:
+async def async_client(test_app: YWStoreAPI) -> AsyncClient:
     async with AsyncClient(app=test_app, base_url=defaults.HOST_URL) as client:
         yield client
 
@@ -100,7 +100,7 @@ async def authorized_client(
     async_client: AsyncClient,
     create_test_user: User,
     get_test_user_data: dict,
-    test_app: YStoreAPI,
+    test_app: YWStoreAPI,
 ) -> AsyncGenerator[AsyncClient, None]:
     url = app.url_path_for("auth:jwt.login")
     credentials = {

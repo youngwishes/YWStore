@@ -1,22 +1,22 @@
 version: "3.8"
 
 services:
-  ystore-web:
+  ywstore-web:
     build: .
-    image: "ystore-web"
-    container_name: "ystore-web"
+    image: "ywstore-web"
+    container_name: "ywstore-web"
     command: ./entrypoint.sh
     ports:
       - "8080:8000"
     volumes:
       - ./:/usr/src/app
     depends_on:
-      ystore-postgres:
+      ywstore-postgres:
         condition: service_healthy
 
-  ystore-postgres:
+  ywstore-postgres:
     image: postgres
-    container_name: "ystore-postgres"
+    container_name: "ywstore-postgres"
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
