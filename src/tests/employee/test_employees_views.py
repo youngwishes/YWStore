@@ -88,7 +88,6 @@ async def test_delete_employee(
         async_client: AsyncClient,
         session: AsyncSession,
         init_employee_data: dict,
-        create_test_company: dict,
         superuser_client: AsyncClient
 ):
     url = app.url_path_for("add_employee")
