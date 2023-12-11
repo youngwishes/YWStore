@@ -92,13 +92,10 @@ async def test_delete_employee(
         superuser_client: AsyncClient
 ):
     url = app.url_path_for("add_employee")
-    print(url)
     response = await async_client.post(url, json=init_employee_data)
-    print(response.text, "\n", init_employee_data)
     assert response.status_code == status.HTTP_201_CREATED
 
     url = app.url_path_for("delete_employee", company_id=init_employee_data["company_id"],
                            pk=init_employee_data["user_id"])
-    print(url)
     response = await superuser_client.delete(url)
     assert response.status_code == status.HTTP_204_NO_CONTENT
