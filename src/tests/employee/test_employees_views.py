@@ -16,9 +16,9 @@ if TYPE_CHECKING:
 
 @pytest.mark.anyio
 async def test_add_new_employee(
-    async_client: AsyncClient,
-    init_employee_data: dict,
-    session: AsyncSession,
+        async_client: AsyncClient,
+        init_employee_data: dict,
+        session: AsyncSession,
 ):
     """Тест на добавление нового пользователя в компанию"""
     employees_count = await session.execute(func.count(select(Employee.user_id)))
@@ -68,9 +68,9 @@ async def test_add_new_employee(
 
 @pytest.mark.anyio
 async def test_get_company_employees(
-    async_client: AsyncClient,
-    session: AsyncSession,
-    init_employee_data: dict,
+        async_client: AsyncClient,
+        session: AsyncSession,
+        init_employee_data: dict,
 ):
     url = app.url_path_for("add_employee")
     response = await async_client.post(url, json=init_employee_data)
@@ -81,3 +81,24 @@ async def test_get_company_employees(
     assert response.status_code == status.HTTP_200_OK
     assert len(response.json()) == 1
     assert response.json()[0]["user"]["id"] == init_employee_data["user_id"]
+
+
+@pytest.mark.anyio
+async def test_delete_employee(
+        async_client: AsyncClient,
+        session: AsyncSession,
+        init_employee_data: dict,
+        create_test_company: dict,
+        superuser_client: AsyncClient
+):
+    url = app.url_path_for("add_employee")
+    print(url)
+    response = await async_client.post(url, json=init_employee_data)
+    print(response.text, "\n", init_employee_data)
+    assert response.status_code == status.HTTP_201_CREATED
+
+    url = app.url_path_for("delete_employee", company_id=init_employee_data["company_id"],
+                           pk=init_employee_data["user_id"])
+    print(url)
+    response = await superuser_client.delete(url)
+    assert response.status_code == status.HTTP_204_NO_CONTENT

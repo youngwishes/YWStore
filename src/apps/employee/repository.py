@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Sequence, TYPE_CHECKING
 
-from sqlalchemy import delete
+from sqlalchemy import delete, update
 from sqlalchemy.orm import selectinload
 from src.core.interfaces import IRepository
 from src.apps.employee.models import Employee
@@ -28,17 +28,18 @@ class EmployeeRepository(IRepository):
 
     async def delete(self):
         await self.session.execute(
-            delete(self.model)
+            update(self.model)
+            .values(is_active=False)
         )
         await self.session.commit()
 
-    async def delete_from_company_by_pk(self, pk: int, company_pk: int) -> bool:
+    async def delete_from_company_by_pk(self, pk: int, company_pk: int):
         result = await self.session.execute(
-            delete(self.model)
+            update(self.model)
             .where(self.model.company_id == company_pk and self.model.user_id == pk)
+            .values(is_active=False)
         )
         await self.session.commit()
-        return bool(result.rowcount)
 
     async def check_if_exists(self, company_pk: int, user_pk: int) -> Employee | None:
         employee = await self.session.execute(

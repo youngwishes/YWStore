@@ -24,7 +24,7 @@ class EmployeeService(IService):
     async def delete(self):
         return await self._repo.delete()
 
-    async def delete_from_company_by_pk(self, pk: int, company_pk: int) -> bool:
+    async def delete_from_company_by_pk(self, pk: int, company_pk: int):
         return await self._repo.delete_from_company_by_pk(pk=pk, company_pk=company_pk)
 
     async def check_if_exists(self, company_pk: int, user_pk: int):

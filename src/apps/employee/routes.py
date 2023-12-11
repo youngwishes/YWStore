@@ -127,16 +127,16 @@ async def get_employees(
         }
     },
 )
-async def delete_employee_from_company(
+async def delete_employee(
         pk: int,
         company_id: int,
         service: EmployeeService = Depends(employee_service),
-        user: User = Depends(superuser)
+        # user: User = Depends(superuser)
 ):
-    is_deleted = await service.delete_from_company_by_pk(company_pk=company_id, pk=pk)
-    if not is_deleted:
+    if service.check_if_exists(company_pk=company_id, user_pk=pk) is None:
         raise NotFoundErrorError(
             detail="Компания с идентификатором %s или сотрудник с идентификатором %s не были найдены."
                    % (company_id, pk),
             status_code=status.HTTP_404_NOT_FOUND
         )
+    await service.delete_from_company_by_pk(company_pk=company_id, pk=pk)
