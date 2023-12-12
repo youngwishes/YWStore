@@ -86,13 +86,13 @@ async def test_get_company_employees(
 
 
 @pytest.mark.anyio
-async def test_delete_employee(
+async def test_delete_employee_superuser(
         async_client: AsyncClient,
         session: AsyncSession,
         init_employee_data: dict,
         superuser_client: AsyncClient
 ):
-    """Тест проверяет мягкое удаление пользователя из компании"""
+    """Тест проверяет мягкое удаление пользователя из компании от имени супер пользователя"""
 
     url = app.url_path_for("add_employee")
     response = await async_client.post(url, json=init_employee_data)
@@ -117,3 +117,70 @@ async def test_delete_employee(
     )
     employee_after = employee_request.unique().scalar_one_or_none()
     assert employee_after.is_active is False
+
+
+@pytest.mark.anyio
+async def test_delete_employee_authorized(
+        async_client: AsyncClient,
+        session: AsyncSession,
+        init_employee_data: dict,
+        authorized_client: AsyncClient
+):
+    """Тест проверяет мягкое удаление пользователя из компании от имени авторизированного клиента"""
+
+    url = app.url_path_for("add_employee")
+    response = await async_client.post(url, json=init_employee_data)
+    assert response.status_code == status.HTTP_201_CREATED
+
+    employee_request = await session.execute(
+        select(Employee)
+        .where(Employee.user_id == init_employee_data["user_id"])
+    )
+    employee_do = employee_request.unique().scalar_one_or_none()
+    assert employee_do.is_active is True
+
+    url = app.url_path_for("delete_employee", company_pk=init_employee_data["company_id"],
+                           employee_pk=init_employee_data["user_id"])
+    response = await authorized_client.delete(url)
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    await session.refresh(employee_do)
+    employee_request = await session.execute(
+        select(Employee)
+        .where(Employee.user_id == init_employee_data["user_id"])
+    )
+    employee_after = employee_request.unique().scalar_one_or_none()
+    assert employee_after.is_active is True
+
+
+@pytest.mark.anyio
+async def test_delete_employee_unauthorized(
+        async_client: AsyncClient,
+        session: AsyncSession,
+        init_employee_data: dict
+):
+    """Тест проверяет мягкое удаление пользователя из компании от имени неавторизированного клиента"""
+
+    url = app.url_path_for("add_employee")
+    response = await async_client.post(url, json=init_employee_data)
+    assert response.status_code == status.HTTP_201_CREATED
+
+    employee_request = await session.execute(
+        select(Employee)
+        .where(Employee.user_id == init_employee_data["user_id"])
+    )
+    employee_do = employee_request.unique().scalar_one_or_none()
+    assert employee_do.is_active is True
+
+    url = app.url_path_for("delete_employee", company_pk=init_employee_data["company_id"],
+                           employee_pk=init_employee_data["user_id"])
+    response = await async_client.delete(url)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    await session.refresh(employee_do)
+    employee_request = await session.execute(
+        select(Employee)
+        .where(Employee.user_id == init_employee_data["user_id"])
+    )
+    employee_after = employee_request.unique().scalar_one_or_none()
+    assert employee_after.is_active is True

@@ -131,7 +131,7 @@ async def delete_employee(
         employee_pk: int,
         company_pk: int,
         service: EmployeeService = Depends(employee_service),
-        # user: User = Depends(superuser)
+        user: User = Depends(superuser)
 ):
     if service.check_if_exists(company_pk=company_pk, user_pk=employee_pk) is None:
         raise NotFoundErrorError(
