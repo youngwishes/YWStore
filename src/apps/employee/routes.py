@@ -85,7 +85,7 @@ async def add_employee(
 
 
 @employee_router.get(
-    "/{company_id}",
+    "/{company_pk}",
     responses={
         status.HTTP_200_OK: {
             "model": Sequence[EmployeeOut],
@@ -108,14 +108,14 @@ async def add_employee(
     response_model=Sequence[EmployeeOut],
 )
 async def get_employees(
-        company_id: int,
+        company_pk: int,
         service: EmployeeService = Depends(employee_service),
 ) -> Sequence[Employee]:
-    return await service.get(pk=company_id)
+    return await service.get(pk=company_pk)
 
 
 @employee_router.delete(
-    "/{company_id}/{pk}",
+    "/{company_pk}/{employee_pk}",
     description="Удаление сотрудника.",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
@@ -128,15 +128,15 @@ async def get_employees(
     },
 )
 async def delete_employee(
-        pk: int,
-        company_id: int,
+        employee_pk: int,
+        company_pk: int,
         service: EmployeeService = Depends(employee_service),
         # user: User = Depends(superuser)
 ):
-    if service.check_if_exists(company_pk=company_id, user_pk=pk) is None:
+    if service.check_if_exists(company_pk=company_pk, user_pk=employee_pk) is None:
         raise NotFoundErrorError(
             detail="Компания с идентификатором %s или сотрудник с идентификатором %s не были найдены."
-                   % (company_id, pk),
+                   % (company_pk, employee_pk),
             status_code=status.HTTP_404_NOT_FOUND
         )
-    await service.delete_from_company_by_pk(company_pk=company_id, pk=pk)
+    await service.delete_from_company_by_pk(company_pk=company_pk, pk=employee_pk)
