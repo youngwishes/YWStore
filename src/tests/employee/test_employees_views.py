@@ -72,11 +72,13 @@ async def test_get_company_employees(
         session: AsyncSession,
         init_employee_data: dict,
 ):
+    """Тест проверяет получение пользователей из компании"""
+
     url = app.url_path_for("add_employee")
     response = await async_client.post(url, json=init_employee_data)
     assert response.status_code == status.HTTP_201_CREATED
 
-    url = app.url_path_for("get_employees", company_id=init_employee_data["company_id"])
+    url = app.url_path_for("get_employees", company_pk=init_employee_data["company_id"])
     response = await async_client.get(url)
     assert response.status_code == status.HTTP_200_OK
     assert len(response.json()) == 1
@@ -90,11 +92,28 @@ async def test_delete_employee(
         init_employee_data: dict,
         superuser_client: AsyncClient
 ):
+    """Тест проверяет мягкое удаление пользователя из компании"""
+
     url = app.url_path_for("add_employee")
     response = await async_client.post(url, json=init_employee_data)
     assert response.status_code == status.HTTP_201_CREATED
 
-    url = app.url_path_for("delete_employee", company_id=init_employee_data["company_id"],
-                           pk=init_employee_data["user_id"])
+    employee_request = await session.execute(
+        select(Employee)
+        .where(Employee.user_id == init_employee_data["user_id"])
+    )
+    employee_do = employee_request.unique().scalar_one_or_none()
+    assert employee_do.is_active is True
+
+    url = app.url_path_for("delete_employee", company_pk=init_employee_data["company_id"],
+                           employee_pk=init_employee_data["user_id"])
     response = await superuser_client.delete(url)
     assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    await session.refresh(employee_do)
+    employee_request = await session.execute(
+        select(Employee)
+        .where(Employee.user_id == init_employee_data["user_id"])
+    )
+    employee_after = employee_request.unique().scalar_one_or_none()
+    assert employee_after.is_active is False
