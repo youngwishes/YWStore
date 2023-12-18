@@ -1,0 +1,35 @@
+image: python:latest
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+
+stages:
+ - build
+ - test
+
+before_script:
+  - pip3 install poetry==1.7.1
+
+build:
+  stage: build
+  tags:
+   - main
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest .
+    - docker push $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest
+  artifacts:
+    paths:
+      - build/*
+
+test:
+  stage: test
+  dependencies:
+    - build
+  services:
+    - postgres
+  tags:
+    - main
+  script:
+    - python3 -m pytest
