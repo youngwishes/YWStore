@@ -9,7 +9,7 @@ stages:
  - test
 
 before_script:
-  - pip3 install poetry==1.7.1
+  - pip3 install poetry
 
 build:
   stage: build
