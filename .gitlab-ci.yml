@@ -31,5 +31,5 @@ test:
 
   script:
     - ls
-    - poetry install
+    - docker compose up -d
 #    - python3 -m pytest
