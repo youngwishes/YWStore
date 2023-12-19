@@ -12,3 +12,10 @@ before_script:
 - apk upgrade
 - apk add python python-dev py-pip build-base
 - pip install docker-compose
+
+unit-test:
+  stage: test
+  script:
+    - docker-compose down -v
+    - docker-compose up --build --detach --env_file=$ENV_FILE
+
