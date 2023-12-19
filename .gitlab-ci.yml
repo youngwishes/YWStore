@@ -1,4 +1,4 @@
-image: docker/compose:latest
+image: docker:latest
 
 workflow:
   rules:
@@ -13,6 +13,11 @@ services:
 stages:
  - build
  - test
+
+before_script:
+  - apk update
+  - apk upgrade
+  - apk add --no-cache docker-compose
 
 build:
   stage: build
