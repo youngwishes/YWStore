@@ -40,5 +40,4 @@ test:
   tags:
     - main
   script:
-    - docker-compose down -v
-    - docker-compose up --detach --enf-file=$ENF_FILE
+    - docker exec ywstore-web pytest -W ignore
