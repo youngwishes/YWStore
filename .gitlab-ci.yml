@@ -8,6 +8,7 @@ stages:
 
 build:
   stage: build
+  image: docker:git
   tags:
    - main
   script:
