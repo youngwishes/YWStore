@@ -44,7 +44,7 @@ test:
   tags:
     - main
   script:
-    - docker-compose down -v
+#    - docker-compose down -v
     - pip install poetry==1.7.1
     - poetry install
     - pytest -W ignore
