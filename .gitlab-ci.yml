@@ -49,7 +49,7 @@ test:
   script:
     - docker-compose down -v
     - docker system prune -f
-    - docker-compose up ywstore-web --detach
+    - docker-compose up --detach
     - docker exec ywstore-web pytest -W ignore
     - docker-compose down -v
     - docker system prune -a
