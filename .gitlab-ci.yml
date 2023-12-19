@@ -48,7 +48,7 @@ test:
     - main
   script:
     - docker-compose down -v
-    - docker-compose up -f ./docker-compose.local.yaml --detach
+    - docker-compose -f ./docker-compose.local.yaml up --detach
     - docker exec ywstore-web pytest -W ignore
     - docker-compose down -v
     - docker system prune -a
