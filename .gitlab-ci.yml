@@ -1,3 +1,5 @@
+image: docker/compose:latest
+
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
@@ -12,23 +14,23 @@ stages:
   - build
   - test
 
-#before_script:
-#  - docker-compose version
+before_script:
+  - docker version
+  - docker-compose version
 
-#build:
-#  stage: build
-#  tags:
-#    - main
-#  script:
-#    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#    - docker build -t $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest .
-#    - docker push $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest
-#  artifacts:
-#    paths:
-#      - build/*
+build:
+  stage: build
+  tags:
+    - main
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest .
+    - docker push $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest
+  artifacts:
+    paths:
+      - build/*
 
 test:
-  image: python:latest
   variables:
      POSTGRES_USER: $POSTGRES_USER
      POSTGRES_DB: $POSTGRES_DB
@@ -37,14 +39,16 @@ test:
      PROJECT_NAME: $PROJECT_NAME
      DEBUG: $DEBUG
   stage: test
-#  dependencies:
-#    - build
+  image: docker:git
+  dependencies:
+    - build
   services:
     - postgres
   tags:
     - main
   script:
-#    - docker-compose down -v
-    - pip install poetry==1.7.1
-    - poetry install
-    - pytest -W ignore
+    - docker-compose down -v
+    - docker-compose up -f ./docker-compose.local.yaml --detach
+    - docker exec ywstore-web pytest -W ignore
+    - docker-compose down -v
+    - docker system prune -a
