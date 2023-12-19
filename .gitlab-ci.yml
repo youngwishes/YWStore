@@ -1,5 +1,4 @@
-image:
-  name: docker/compose:latest
+image: docker:latest
 
 workflow:
   rules:
@@ -40,4 +39,5 @@ test:
   tags:
     - main
   script:
+    - docker-compose down -v
     - docker-compose up --detach --env-file=$ENV_FILE
