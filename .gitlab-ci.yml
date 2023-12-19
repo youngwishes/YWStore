@@ -1,18 +1,24 @@
-image: python:latest
-
 variables:
-  DOCKER_DRIVER: overlay
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
+
+# Official docker compose image.
+image:
+  name: docker/compose:latest
+
+stages:
+  - test
 
 services:
-- docker:dind
+  - docker:dind
 
 before_script:
-- docker info
-- pip install docker-compose
+  - docker version
+  - docker-compose version
 
 unit-test:
   stage: test
   script:
-    - docker-compose down -v
-    - docker-compose up --build --detach --env_file=$ENV_FILE
-
+    - docker-compose down
+    - docker-compose build
+    - docker-compose up tester-image
