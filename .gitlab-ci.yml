@@ -1,5 +1,3 @@
-image: docker/compose:latest
-
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
@@ -14,8 +12,8 @@ stages:
   - build
   - test
 
-before_script:
-  - docker-compose version
+#before_script:
+#  - docker-compose version
 
 #build:
 #  stage: build
