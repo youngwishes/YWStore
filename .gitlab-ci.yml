@@ -36,5 +36,5 @@ test:
   tags:
     - main
   script:
-    - docker-compose down -v
-    - docker-compose up --detach --env-file=$ENV_FILE
+    - docker compose down -v
+    - docker compose up --detach --env-file=$ENV_FILE
