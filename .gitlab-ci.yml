@@ -37,4 +37,4 @@ test:
     - main
   script:
     - docker compose down -v
-    - docker compose up -d --env-file=$ENV_FILE
+    - docker compose up --env-file=$ENV_FILE
