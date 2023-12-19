@@ -1,14 +1,27 @@
+image:
+  name: docker/compose:latest
+
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+
+variables:
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
+
+services:
+  - docker:dind
 
 stages:
  - build
  - test
 
+before_script:
+  - docker version
+  - docker-compose version
+
 build:
   stage: build
-  image: docker:git
   tags:
    - main
   script:
@@ -28,8 +41,6 @@ test:
     - postgres
   tags:
     - main
-
   script:
-    - ls
-    - docker-compose up
-#    - python3 -m pytest
+    - apk add --no-cache docker-compose
+    - docker-compose up --detach --env-file=$ENV_FILE
