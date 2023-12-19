@@ -31,5 +31,5 @@ test:
 
   script:
     - ls
-    - docker compose up --detach
+    - docker compose up
 #    - python3 -m pytest
