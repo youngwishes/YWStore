@@ -28,10 +28,8 @@ test:
     - postgres
   tags:
     - main
+
   script:
-#    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#    - docker pull $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest
-    - pwd
     - ls
-    - ll
+    - poetry install
 #    - python3 -m pytest
