@@ -15,10 +15,6 @@ stages:
  - build
  - test
 
-before_script:
-  - docker version
-  - docker-compose version
-
 build:
   stage: build
   tags:
