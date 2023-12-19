@@ -18,17 +18,17 @@ before_script:
   - docker version
   - docker-compose version
 
-#build:
-#  stage: build
-#  tags:
-#    - main
-#  script:
-#    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#    - docker build -t $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest .
-#    - docker push $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest
-#  artifacts:
-#    paths:
-#      - build/*
+build:
+  stage: build
+  tags:
+    - main
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest .
+    - docker push $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest
+  artifacts:
+    paths:
+      - build/*
 
 test:
   image: python:latest
@@ -40,8 +40,8 @@ test:
      PROJECT_NAME: $PROJECT_NAME
      DEBUG: $DEBUG
   stage: test
-#  dependencies:
-#    - build
+  dependencies:
+    - build
   services:
     - postgres
   tags:
