@@ -6,10 +6,6 @@ services:
     image: "ywstore-web"
     container_name: "ywstore-web"
     command: alembic upgrade head && uvicorn src.main:app --reload --workers 1
-    ports:
-      - "8080:8000"
-    volumes:
-      - ./:/usr/src/app
     depends_on:
       ywstore-postgres:
         condition: service_healthy

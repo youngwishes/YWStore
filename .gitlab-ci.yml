@@ -47,6 +47,7 @@ test:
   tags:
     - main
   script:
+    - docker ps
     - docker-compose down -v
     - docker-compose -f ./docker-compose.local.yaml up --detach
     - docker exec ywstore-web pytest -W ignore
