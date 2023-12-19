@@ -21,7 +21,7 @@ build:
 
 test:
   stage: test
-  image: $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest
+  image: docker:git
   dependencies:
     - build
   services:
@@ -29,4 +29,9 @@ test:
   tags:
     - main
   script:
-    - python3 -m pytest
+#    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+#    - docker pull $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest
+    - pwd
+    - ls
+    - ll
+#    - python3 -m pytest
