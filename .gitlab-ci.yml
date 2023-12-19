@@ -1,20 +1,44 @@
+image: docker/compose:latest
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+
 variables:
   DOCKER_DRIVER: overlay2
 
-image:
-  name: docker/compose:latest
-
-stages:
-  - test
-
 services:
   - docker:dind
+
+stages:
+ - build
+ - test
 
 before_script:
   - docker version
   - docker-compose version
 
-unit-test:
-  stage: test
+build:
+  stage: build
+  tags:
+   - main
   script:
-    - docker-compose down
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest .
+    - docker push $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest
+  artifacts:
+    paths:
+      - build/*
+
+test:
+  stage: test
+  image: docker:git
+  dependencies:
+    - build
+  services:
+    - postgres
+  tags:
+    - main
+  script:
+    - docker-compose down -v
+    - docker-compose up
