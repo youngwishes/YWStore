@@ -8,9 +8,6 @@ stages:
  - build
  - test
 
-before_script:
-  - pip3 install poetry
-
 build:
   stage: build
   tags:
@@ -25,6 +22,7 @@ build:
 
 test:
   stage: test
+  image: $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest
   dependencies:
     - build
   services:
