@@ -17,6 +17,7 @@ stages:
 before_script:
   - docker version
   - docker-compose version
+  - pip --version
 
 build:
   stage: build
@@ -31,6 +32,7 @@ build:
       - build/*
 
 test:
+  image: python:latest
   variables:
      POSTGRES_USER: $POSTGRES_USER
      POSTGRES_DB: $POSTGRES_DB
@@ -39,7 +41,6 @@ test:
      PROJECT_NAME: $PROJECT_NAME
      DEBUG: $DEBUG
   stage: test
-  image: docker:git
   dependencies:
     - build
   services:
@@ -48,8 +49,6 @@ test:
     - main
   script:
     - docker-compose down -v
-    - docker system prune -f
-    - docker-compose up --detach
-    - docker exec ywstore-web pytest -W ignore
-    - docker-compose down -v
-    - docker system prune -a
+    - pip install poetry==1.7.1
+    - poetry install
+    - pytest -W ignore
