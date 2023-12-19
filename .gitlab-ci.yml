@@ -41,4 +41,4 @@ test:
     - main
   script:
     - docker-compose down -v
-    - docker-compose up
+    - docker-compose up --detach --enf-file=$ENF_FILE
