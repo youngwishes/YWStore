@@ -40,7 +40,6 @@ test:
   stage: test
   image: $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest
   before_script:
-    - docker ps
     - echo $POSTGRES_USER
     - echo $DEBUG
   dependencies:
