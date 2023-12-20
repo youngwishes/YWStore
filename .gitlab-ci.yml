@@ -39,7 +39,7 @@ test:
      PROJECT_NAME: $PROJECT_NAME
      DEBUG: $DEBUG
   stage: test
-  image: docker:git
+  image: $CI_REGISTRY/youngwishes/ywstore/$CI_DEFAULT_BRANCH:latest
   dependencies:
     - build
   services:
@@ -47,9 +47,4 @@ test:
   tags:
     - main
   script:
-    - docker ps
-    - docker-compose down -v
-    - docker-compose -f ./docker-compose.local.yaml up --detach
-    - docker exec ywstore-web pytest -W ignore
-    - docker-compose down -v
-    - docker system prune -a
+    - pytest -W ignore
