@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Body
 from src.apps.company.schemas import CompanyIn, CompanyOut, CompanyOptional
 from src.core.users.auth import current_user, superuser
 from src.apps.company.depends import company_service
-from src.core.exceptions import UniqueConstraintError, NotFoundErrorError
+from src.core.exceptions import UniqueConstraintError, NotFoundError
 from src.core.http_response_schemas import (
     Unauthorized,
     UniqueConstraint,
@@ -24,18 +24,10 @@ company_router = APIRouter()
     "",
     response_model=CompanyOut,
     responses={
-        status.HTTP_201_CREATED: {
-            "model": CompanyOut,
-            "description": "Компания успешно создана",
-        },
-        status.HTTP_400_BAD_REQUEST: {
-            "model": UniqueConstraint,
-            "description": "Компания с таким именем уже существует",
-        },
-        status.HTTP_401_UNAUTHORIZED: {
-            "model": Unauthorized,
-            "description": "Не авторизированный пользователь не может создать компанию",
-        },
+        status.HTTP_201_CREATED: {"model": CompanyOut},
+        status.HTTP_400_BAD_REQUEST: {"model": UniqueConstraint},
+        status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
+        status.HTTP_403_FORBIDDEN: {"model": NotAllowed},
     },
     status_code=status.HTTP_201_CREATED,
     description="Зарегистрировать новую компанию",
@@ -59,6 +51,7 @@ async def register_company(
     response_model=Sequence[CompanyOut],
     description="Получить все компании",
     status_code=status.HTTP_200_OK,
+    responses={status.HTTP_200_OK: {"model": Sequence[CompanyOut]}},
 )
 async def companies_list(
     service: CompanyService = Depends(company_service),
@@ -70,6 +63,11 @@ async def companies_list(
     "",
     status_code=status.HTTP_204_NO_CONTENT,
     description="Удалить все компании",
+    responses={
+        status.HTTP_204_NO_CONTENT: {"model": None},
+        status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
+        status.HTTP_403_FORBIDDEN: {"model": NotAllowed},
+    },
 )
 async def delete_companies(
     service: CompanyService = Depends(company_service),
@@ -83,14 +81,8 @@ async def delete_companies(
     status_code=status.HTTP_200_OK,
     description="Детальное представление компании",
     responses={
-        status.HTTP_200_OK: {
-            "model": CompanyOut,
-            "description": "Детальное представление компании",
-        },
-        status.HTTP_404_NOT_FOUND: {
-            "model": NotFound,
-            "description": "Компания не найдена",
-        },
+        status.HTTP_200_OK: {"model": CompanyOut},
+        status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
 async def company_detail(
@@ -99,7 +91,7 @@ async def company_detail(
 ) -> CompanyOut:
     company = await service.get_by_pk(pk=pk)
     if not company:
-        raise NotFoundErrorError(
+        raise NotFoundError(
             detail="Компания с идентификатором %s не была найдена" % pk,
             status_code=404,
         )
@@ -112,10 +104,7 @@ async def company_detail(
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         status.HTTP_204_NO_CONTENT: {"description": "Компания успешно удалена"},
-        status.HTTP_404_NOT_FOUND: {
-            "model": NotFound,
-            "description": "Компания не найдена",
-        },
+        status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
 async def delete_company(
@@ -125,7 +114,7 @@ async def delete_company(
 ):
     is_deleted = await service.delete_by_pk(pk=pk)
     if not is_deleted:
-        raise NotFoundErrorError(
+        raise NotFoundError(
             detail="Компания с идентификатором %s не была найдена" % pk,
             status_code=404,
         )
@@ -136,14 +125,8 @@ async def delete_company(
     description="Обновить учетные данные компании",
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_200_OK: {
-            "model": CompanyOut,
-            "description": "Учетные данные успешно обновлены",
-        },
-        status.HTTP_404_NOT_FOUND: {
-            "model": NotFound,
-            "description": "Компания отсутствует в системе",
-        },
+        status.HTTP_200_OK: {"model": CompanyOut},
+        status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
 async def update_company(
@@ -154,7 +137,7 @@ async def update_company(
 ) -> CompanyOut:
     company_exists = await service.get_by_pk(pk=pk)
     if not company_exists:
-        raise NotFoundErrorError(
+        raise NotFoundError(
             detail="Компания с идентификатором %s не была найдена" % pk,
             status_code=status.HTTP_404_NOT_FOUND,
         )
@@ -172,14 +155,8 @@ async def update_company(
     "/{pk}",
     description="Обновить учетные данные компании частично",
     responses={
-        status.HTTP_200_OK: {
-            "model": CompanyOut,
-            "description": "Учетные данные успешно обновлены",
-        },
-        status.HTTP_404_NOT_FOUND: {
-            "model": NotFound,
-            "description": "Компания отсутствует в системе",
-        },
+        status.HTTP_200_OK: {"model": CompanyOut},
+        status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
 async def update_company_partially(
@@ -190,7 +167,7 @@ async def update_company_partially(
 ) -> CompanyOut:
     company_exists = await service.get_by_pk(pk=pk)
     if not company_exists:
-        raise NotFoundErrorError(
+        raise NotFoundError(
             detail="Компания с идентификатором %s не была найдена" % pk,
             status_code=status.HTTP_404_NOT_FOUND,
         )
@@ -207,22 +184,10 @@ async def update_company_partially(
 @company_router.patch(
     "/{pk}/verify",
     responses={
-        status.HTTP_200_OK: {
-            "model": CompanyOut,
-            "description": "Статус верификации успешно изменен",
-        },
-        status.HTTP_404_NOT_FOUND: {
-            "model": NotFound,
-            "description": "Компания не найдена",
-        },
-        status.HTTP_401_UNAUTHORIZED: {
-            "model": Unauthorized,
-            "description": "Не авторизован",
-        },
-        status.HTTP_403_FORBIDDEN: {
-            "model": NotAllowed,
-            "description": "У вас недостаточно прав",
-        },
+        status.HTTP_200_OK: {"model": CompanyOut},
+        status.HTTP_404_NOT_FOUND: {"model": NotFound},
+        status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
+        status.HTTP_403_FORBIDDEN: {"model": NotAllowed},
     },
 )
 async def verify_company(
@@ -233,7 +198,7 @@ async def verify_company(
 ) -> CompanyOut:
     company = await service.update_is_verified(pk=pk, is_verified=is_verified)
     if not company:
-        raise NotFoundErrorError(
+        raise NotFoundError(
             detail="Компания с идентификатором %s не была найдена" % pk,
             status_code=status.HTTP_404_NOT_FOUND,
         )
@@ -243,22 +208,10 @@ async def verify_company(
 @company_router.patch(
     "/{pk}/hide",
     responses={
-        status.HTTP_200_OK: {
-            "model": CompanyOut,
-            "description": "Отображение компании в системе изменено",
-        },
-        status.HTTP_404_NOT_FOUND: {
-            "model": NotFound,
-            "description": "Компания не найдена",
-        },
-        status.HTTP_401_UNAUTHORIZED: {
-            "model": Unauthorized,
-            "description": "Не авторизован",
-        },
-        status.HTTP_403_FORBIDDEN: {
-            "model": NotAllowed,
-            "description": "У вас недостаточно прав",
-        },
+        status.HTTP_200_OK: {"model": CompanyOut},
+        status.HTTP_404_NOT_FOUND: {"model": NotFound},
+        status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
+        status.HTTP_403_FORBIDDEN: {"model": NotAllowed},
     },
 )
 async def hide_company(
@@ -269,7 +222,7 @@ async def hide_company(
 ) -> CompanyOut:
     company = await service.update_is_hidden(pk=pk, is_hidden=is_hidden)
     if not company:
-        raise NotFoundErrorError(
+        raise NotFoundError(
             detail="Компания с идентификатором %s не была найдена" % pk,
             status_code=status.HTTP_404_NOT_FOUND,
         )
