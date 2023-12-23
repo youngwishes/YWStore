@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "yshop"
+name = "ywstore"
 version = "0.1.0"
 description = "Diploma"
 authors = ["Danil Fedorov"]

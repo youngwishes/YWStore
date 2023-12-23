@@ -6,7 +6,6 @@ from sqlalchemy import URL
 if TYPE_CHECKING:
     from src.core.config import PGSettings
 
-
 settings: PGSettings = get_settings(db_only=True)
 
 TEST_DB_NAME: str = "test_db"
@@ -27,3 +26,6 @@ TEST_USER_FIRST_NAME: str = "test_first_name"
 TEST_USER_LAST_NAME: str = "test_user_last_name"
 TEST_USER_MIDDLE_NAME: str = "test_user_middle_name"
 TEST_USER_PASSWORD: str = "test_user_password"
+
+TEST_ROLE_NAME: str = "Администратор компании"
+TEST_ROLE_NEW_NAME: str = "Менеджер"
