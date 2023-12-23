@@ -13,9 +13,11 @@ from src.core.http_response_schemas import (
 )
 from src.core.users.models import User
 from fastapi import status
+from src.permissions.depends import permission_service
 
 if TYPE_CHECKING:
     from src.apps.company.service import CompanyService
+    from src.permissions.service import PermissionService
 
 company_router = APIRouter()
 
@@ -34,7 +36,7 @@ company_router = APIRouter()
 )
 async def register_company(
     company: CompanyIn,
-    user: User = Depends(superuser),
+    _: PermissionService = Depends(permission_service(allowed_roles=[])),
     service: CompanyService = Depends(company_service),
 ) -> CompanyOut:
     if await service.get_by_name(name=company.name):
