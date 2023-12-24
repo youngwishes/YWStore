@@ -3,6 +3,7 @@ from fastapi_users import models
 from fastapi_users import schemas
 from pydantic import EmailStr
 from datetime import datetime
+from src.apps.roles.schemas import RoleOut
 
 
 class UserRead(schemas.BaseUser[int]):
@@ -16,6 +17,7 @@ class UserRead(schemas.BaseUser[int]):
     last_name: Optional[str] = None
     middle_name: Optional[str] = None
     last_login: Optional[datetime] = None
+    roles: Optional[list[RoleOut]] = None
 
 
 class UserCreate(schemas.BaseUserCreate):

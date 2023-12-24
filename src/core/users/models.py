@@ -2,6 +2,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from sqlalchemy import String, Integer, DateTime, Boolean, ForeignKey, func
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from fastapi_users.db import SQLAlchemyBaseUserTable
 
@@ -38,12 +39,13 @@ class User(JSONRepresentationMixin, SQLAlchemyBaseUserTable[int], Base):
         DateTime(timezone=True),
         nullable=True,
     )
-    roles: Mapped[list[Role]] = relationship(
+    roles_associations: Mapped[list[UserRoleAssociation]] = relationship(
         "UserRoleAssociation",
-        backref="user",
+        back_populates="user",
         cascade="all, delete-orphan",
         lazy="joined",
     )
+    roles: Mapped[list[Role]] = association_proxy("roles_associations", "role")
 
     def __repr__(self) -> str:
         return self.email
@@ -56,7 +58,7 @@ class Role(JSONRepresentationMixin, Base):
     name: Mapped[str] = mapped_column(String(length=64), nullable=False)
     users: Mapped[list[User]] = relationship(
         "UserRoleAssociation",
-        backref="role",
+        back_populates="role",
         cascade="all, delete-orphan",
         lazy="joined",
     )
@@ -68,6 +70,9 @@ class Role(JSONRepresentationMixin, Base):
 class UserRoleAssociation(JSONRepresentationMixin, Base):
     __tablename__ = "users_roles"
 
+    def __init__(self, role: Role = None):
+        self.role = role
+
     user_id: Mapped[int] = mapped_column(
         ForeignKey("roles.id"),
         primary_key=True,
@@ -78,10 +83,12 @@ class UserRoleAssociation(JSONRepresentationMixin, Base):
         primary_key=True,
         index=True,
     )
-    expire_date: Mapped[datetime] = mapped_column(
+    expire_date: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
+    user: Mapped[User] = relationship("User", back_populates="roles_associations")
+    role: Mapped[Role] = relationship(lazy="joined")
 
     def __repr__(self) -> str:
         return f"UserRole(user={self.user_id}, role={self.role_id})"
