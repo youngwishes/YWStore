@@ -83,7 +83,7 @@ async def test_get_company_employees(
     assert response.status_code == status.HTTP_200_OK
     assert len(response.json()) == 1
     assert response.json()[0]["user"]["id"] == init_employee_data["user_id"]
-    assert response.json()[0]["user"]["is_verified"] is True
+    assert response.json()[0]["user"]["is_active"] is True
 
 
 @pytest.mark.anyio
