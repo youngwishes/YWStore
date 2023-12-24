@@ -21,7 +21,7 @@ class EmployeeRepository(IRepository):
     async def get(self, pk: int) -> Sequence[Employee]:
         employees = await self.session.execute(
             select(self.model)
-            .where(self.model.company_id == pk)
+            .where(self.model.company_id == pk and self.model.is_active is True)
             .options(selectinload(self.model.user)),
         )
         return employees.scalars().all()
