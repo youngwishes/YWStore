@@ -133,7 +133,7 @@ async def update_company(
     pk: int,
     company: CompanyIn,
     service: CompanyService = Depends(company_service),
-    user: User = Depends(current_user),
+    _: User = Depends(current_user),
 ) -> CompanyOut:
     company_exists = await service.get_by_pk(pk=pk)
     if not company_exists:
