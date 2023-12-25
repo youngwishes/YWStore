@@ -32,3 +32,5 @@ services:
       - "5432:5432"
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
+      - ${DUMP_DIR}:/tmp/dumps
+      - ${DUMP_DIR}/${DB_DUMP}:/docker-entrypoint-initdb.d/00dump.sql
