@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Callable
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,9 +11,11 @@ class PermissionService:
         user: User,
         session: AsyncSession,
         allowed_roles: Sequence[str],
+        validators: Sequence[Callable] = None,
     ) -> None:
         self.allowed_roles = allowed_roles
         self._session = session
+        self.validators = validators
         self.user = user
 
     @property
