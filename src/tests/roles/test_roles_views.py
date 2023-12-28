@@ -305,7 +305,7 @@ async def test_add_many_roles_to_user_by_superuser(
     create_test_user: User,
     superuser_client: AsyncClient,
 ):
-    """Добавление пользователю списка ролей пользователю от лица супер-юзера."""
+    """Добавление пользователю списка ролей от лица супер-юзера."""
     url = app.url_path_for("add_role_to_user", user_pk=create_test_user.id)
     data_to_send = {"roles_list": CompanyRoles.list()}
     response = await superuser_client.post(url, json=data_to_send)
