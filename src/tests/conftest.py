@@ -177,7 +177,7 @@ async def create_test_user(
 @pytest.fixture
 async def create_test_users(
     session: AsyncSession,
-    get_test_users_data: dict,
+    get_test_users_data: list[dict],
     get_test_user_manager: UserManager,
 ) -> Sequence[User]:
     create_users_schemas = [
