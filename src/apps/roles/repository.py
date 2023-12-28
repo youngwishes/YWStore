@@ -1,13 +1,13 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
-
 from src.core.interfaces import IRepository
 from src.core.users.models import Role
 from sqlalchemy.sql import delete, select, update
 
 if TYPE_CHECKING:
-    from src.apps.roles.shemas import RoleIn
+    from src.apps.roles.schemas import RoleIn
     from sqlalchemy.ext.asyncio import AsyncSession
+    from src.core.users.models import User
 
 
 class RoleRepository(IRepository):
@@ -53,3 +53,16 @@ class RoleRepository(IRepository):
         await self.session.commit()
         await self.session.refresh(instance)
         return instance
+
+    async def add_roles_to_user(self, user: User, roles_set: set[str]) -> User:
+        user_roles_name_set = {role.name for role in user.roles}
+        roles_stmt = await self.session.execute(
+            select(self.model).where(
+                self.model.name.in_(roles_set.difference(user_roles_name_set)),
+            ),
+        )
+        user.roles.extend(roles_stmt.unique().scalars().all())
+        self.session.add(user)
+        await self.session.commit()
+        await self.session.refresh(user)
+        return user

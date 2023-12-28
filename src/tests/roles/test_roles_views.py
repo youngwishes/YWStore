@@ -1,16 +1,19 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
+
 import pytest
 from fastapi import status
-from src.core.users.models import Role
-from src.tests.defaults import TEST_ROLE_NEW_NAME, TEST_ROLE_NAME
-from src.tests.helpers import check_object_data, get_objects_count, get_object
 
 from src.main import app
+from src.apps.roles.enums import CompanyRoles
+from src.tests.defaults import TEST_ROLE_NEW_NAME, TEST_ROLE_NAME
+from src.tests.helpers import check_object_data, get_objects_count, get_object
+from src.core.users.models import Role
 
 if TYPE_CHECKING:
     from httpx import AsyncClient
     from sqlalchemy.ext.asyncio import AsyncSession
+    from src.core.users.models import User
 
 
 @pytest.mark.anyio
@@ -203,3 +206,146 @@ async def test_get_roles_list_authorized(
     url = app.url_path_for("get_roles")
     response = await authorized_client.get(url)
     assert response.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("role_name", CompanyRoles.list())
+async def test_add_new_role_to_user_by_unauthorized(
+    role_name: str,
+    ywstore_roles: Sequence[Role],
+    session: AsyncSession,
+    create_test_user: User,
+    async_client: AsyncClient,
+):
+    """Добавление пользователю новой роли от лица не авторизированного юзера."""
+    url = app.url_path_for("add_role_to_user", user_pk=create_test_user.id)
+    data_to_send = {"roles_list": [role_name]}
+    response = await async_client.post(url, json=data_to_send)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert (
+        role_name not in [role.name for role in create_test_user.roles]
+        and len(create_test_user.roles) == 0
+    )
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("role_name", CompanyRoles.list())
+async def test_add_new_role_to_user_by_authorized(
+    role_name: str,
+    ywstore_roles: Sequence[Role],
+    session: AsyncSession,
+    create_test_user: User,
+    authorized_client: AsyncClient,
+):
+    """Добавление пользователю новой роли от лица авторизированного юзера."""
+    url = app.url_path_for("add_role_to_user", user_pk=create_test_user.id)
+    data_to_send = {"roles_list": [role_name]}
+    response = await authorized_client.post(url, json=data_to_send)
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert (
+        role_name not in [role.name for role in create_test_user.roles]
+        and len(create_test_user.roles) == 0
+    )
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("role_name", CompanyRoles.list())
+async def test_add_new_role_to_user_by_superuser(
+    role_name: str,
+    ywstore_roles: Sequence[Role],
+    session: AsyncSession,
+    create_test_user: User,
+    superuser_client: AsyncClient,
+):
+    """Добавление пользователю новой роли от лица супер-юзера."""
+    url = app.url_path_for("add_role_to_user", user_pk=create_test_user.id)
+    data_to_send = {"roles_list": [role_name]}
+    response = await superuser_client.post(url, json=data_to_send)
+    assert response.status_code == status.HTTP_200_OK
+    user = response.json()
+    assert user["roles"][0]["name"] == role_name
+    await session.refresh(create_test_user)
+    assert role_name in [role.name for role in create_test_user.roles]
+
+
+@pytest.mark.anyio
+async def test_add_new_not_existed_role_to_user_by_superuser(
+    ywstore_roles: Sequence[Role],
+    session: AsyncSession,
+    create_test_user: User,
+    superuser_client: AsyncClient,
+):
+    """Добавление пользователю не существующей в системе роли от лица супер-юзера."""
+    url = app.url_path_for("add_role_to_user", user_pk=create_test_user.id)
+    data_to_send = {"roles_list": ["Some wrong role name"]}
+    response = await superuser_client.post(url, json=data_to_send)
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("role_name", CompanyRoles.list())
+async def test_add_new_not_existed_user_by_superuser(
+    role_name: str,
+    ywstore_roles: Sequence[Role],
+    session: AsyncSession,
+    create_test_user: User,
+    superuser_client: AsyncClient,
+):
+    """Добавление не существующему пользователю роли от лица супер-юзера."""
+    url = app.url_path_for("add_role_to_user", user_pk=1000)
+    data_to_send = {"roles_list": [role_name]}
+    response = await superuser_client.post(url, json=data_to_send)
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.anyio
+async def test_add_many_roles_to_user_by_superuser(
+    ywstore_roles: Sequence[Role],
+    session: AsyncSession,
+    create_test_user: User,
+    superuser_client: AsyncClient,
+):
+    """Добавление пользователю списка ролей от лица супер-юзера."""
+    url = app.url_path_for("add_role_to_user", user_pk=create_test_user.id)
+    data_to_send = {"roles_list": CompanyRoles.list()}
+    response = await superuser_client.post(url, json=data_to_send)
+    assert response.status_code == status.HTTP_200_OK
+    user = response.json()
+    user_roles_from_response = [role["name"] for role in user["roles"]]
+    await session.refresh(create_test_user)
+    user_roles_from_db = [role.name for role in create_test_user.roles]
+    for role in CompanyRoles.list():
+        assert role in user_roles_from_response
+        assert role in user_roles_from_db
+
+
+@pytest.mark.anyio
+async def test_add_exist_role_to_user_by_superuser(
+    ywstore_roles: Sequence[Role],
+    session: AsyncSession,
+    create_test_user: User,
+    superuser_client: AsyncClient,
+):
+    """Добавление пользователю роли в которой он уже состоит от лица супер-юзера."""
+    url = app.url_path_for("add_role_to_user", user_pk=create_test_user.id)
+    data_to_send = {"roles_list": CompanyRoles.list()}
+    response = await superuser_client.post(url, json=data_to_send)
+    assert response.status_code == status.HTTP_200_OK
+    user = response.json()
+    user_roles_from_response = [role["name"] for role in user["roles"]]
+    await session.refresh(create_test_user)
+    user_roles_from_db = [role.name for role in create_test_user.roles]
+    for role in CompanyRoles.list():
+        assert role in user_roles_from_response
+        assert role in user_roles_from_db
+
+    data_to_send = {"roles_list": [CompanyRoles.ADMIN]}
+    response = await superuser_client.post(url, json=data_to_send)
+    assert response.status_code == status.HTTP_200_OK
+    user = response.json()
+    await session.refresh(create_test_user)
+    user_roles_from_response_new = [role["name"] for role in user["roles"]]
+    user_roles_from_db_new = [role.name for role in create_test_user.roles]
+    for role in user_roles_from_response_new:
+        assert role in user_roles_from_response
+        assert role in user_roles_from_db_new

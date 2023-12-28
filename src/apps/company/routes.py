@@ -34,7 +34,7 @@ company_router = APIRouter()
 )
 async def register_company(
     company: CompanyIn,
-    user: User = Depends(superuser),
+    _: User = Depends(superuser),
     service: CompanyService = Depends(company_service),
 ) -> CompanyOut:
     if await service.get_by_name(name=company.name):
@@ -71,7 +71,7 @@ async def companies_list(
 )
 async def delete_companies(
     service: CompanyService = Depends(company_service),
-    user: User = Depends(superuser),
+    _: User = Depends(superuser),
 ):
     await service.delete()
 
@@ -110,7 +110,7 @@ async def company_detail(
 async def delete_company(
     pk: int,
     service: CompanyService = Depends(company_service),
-    user: User = Depends(superuser),
+    _: User = Depends(superuser),
 ):
     is_deleted = await service.delete_by_pk(pk=pk)
     if not is_deleted:
@@ -133,7 +133,7 @@ async def update_company(
     pk: int,
     company: CompanyIn,
     service: CompanyService = Depends(company_service),
-    user: User = Depends(current_user),
+    _: User = Depends(current_user),
 ) -> CompanyOut:
     company_exists = await service.get_by_pk(pk=pk)
     if not company_exists:
@@ -163,7 +163,7 @@ async def update_company_partially(
     pk: int,
     company: CompanyOptional,
     service: CompanyService = Depends(company_service),
-    user: User = Depends(current_user),
+    _: User = Depends(current_user),
 ) -> CompanyOut:
     company_exists = await service.get_by_pk(pk=pk)
     if not company_exists:
@@ -193,7 +193,7 @@ async def update_company_partially(
 async def verify_company(
     pk: int,
     is_verified: bool = Body(default=True, embed=True),
-    user: User = Depends(superuser),
+    _: User = Depends(superuser),
     service: CompanyService = Depends(company_service),
 ) -> CompanyOut:
     company = await service.update_is_verified(pk=pk, is_verified=is_verified)
@@ -217,7 +217,7 @@ async def verify_company(
 async def hide_company(
     pk: int,
     is_hidden: bool = Body(default=True, embed=True),
-    user: User = Depends(superuser),
+    _: User = Depends(superuser),
     service: CompanyService = Depends(company_service),
 ) -> CompanyOut:
     company = await service.update_is_hidden(pk=pk, is_hidden=is_hidden)
