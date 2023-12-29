@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 import pytest
 from fastapi import status
 from sqlalchemy.sql import select, func
@@ -16,9 +16,9 @@ if TYPE_CHECKING:
 
 @pytest.mark.anyio
 async def test_add_new_employee(
-        async_client: AsyncClient,
-        init_employee_data: dict,
-        session: AsyncSession,
+    async_client: AsyncClient,
+    init_employee_data: dict,
+    session: AsyncSession,
 ):
     """Тест на добавление нового пользователя в компанию"""
     employees_count = await session.execute(func.count(select(Employee.user_id)))
@@ -70,7 +70,7 @@ async def test_add_new_employee(
 async def test_get_company_employees(
     async_client: AsyncClient,
     session: AsyncSession,
-    active_employees,
+    active_employees: Sequence[Employee],
     create_employees_many: Sequence[Employee],
 ):
     """Тест проверяет получение пользователей из компании"""
@@ -80,12 +80,6 @@ async def test_get_company_employees(
     )
     response = await async_client.get(url)
 
-    url = app.url_path_for("add_employee")
-    response = await async_client.post(url, json=init_employee_data)
-    assert response.status_code == status.HTTP_201_CREATED
-
-    url = app.url_path_for("get_employees", company_pk=init_employee_data["company_id"])
-    response = await async_client.get(url)
     assert response.status_code == status.HTTP_200_OK
     assert len(response.json()) == len(active_employees)
     assert len(response.json()) != len(create_employees_many)

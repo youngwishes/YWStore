@@ -1,5 +1,7 @@
 from __future__ import annotations
-from typing import AsyncGenerator, TYPE_CHECKING
+
+from copy import copy
+from typing import AsyncGenerator, TYPE_CHECKING, Sequence
 
 import pytest
 
@@ -140,6 +142,23 @@ def get_test_user_data() -> dict:
 
 
 @pytest.fixture
+def get_test_users_data(get_test_user_data) -> list[dict]:
+    users_schemas = []
+    for i in map(str, range(1, 11)):
+        schema = copy(get_test_user_data)
+        schema.update(
+            {
+                "email": i + get_test_user_data["email"],
+                "first_name": get_test_user_data["first_name"] + i,
+                "is_active": False if int(i) % 2 == 0 else True,
+                "password": get_test_user_data["password"] + i,
+            },
+        )
+        users_schemas.append(schema)
+    return users_schemas
+
+
+@pytest.fixture
 async def create_test_user(
     session: AsyncSession,
     get_test_user_data: dict,
@@ -148,6 +167,22 @@ async def create_test_user(
     create_user_schema = UserCreate(**get_test_user_data)
     user = await get_test_user_manager.create(create_user_schema)
     return user
+
+
+@pytest.fixture
+async def create_test_users(
+    session: AsyncSession,
+    get_test_users_data: list[dict],
+    get_test_user_manager: UserManager,
+) -> Sequence[User]:
+    create_users_schemas = [
+        UserCreate(**test_user_data) for test_user_data in get_test_users_data
+    ]
+    users = [
+        await get_test_user_manager.create(user_schema)
+        for user_schema in create_users_schemas
+    ]
+    return users
 
 
 @pytest.fixture
