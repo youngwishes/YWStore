@@ -52,9 +52,17 @@ async def create_employees_many(
 
 @pytest.fixture
 def init_active_employees_data(create_employees_many: Sequence[Employee]):
-    return [test_user for test_user in create_employees_many if test_user.is_active]
+    return [
+        test_employee
+        for test_employee in create_employees_many
+        if test_employee.is_active
+    ]
 
 
 @pytest.fixture
 def init_inactive_employees_data(create_employees_many: Sequence[Employee]):
-    return [test_user for test_user in create_employees_many if not test_user.is_active]
+    return [
+        test_employee
+        for test_employee in create_employees_many
+        if not test_employee.is_active
+    ]
