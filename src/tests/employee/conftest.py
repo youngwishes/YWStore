@@ -34,19 +34,14 @@ async def create_employees_many(
     create_test_users: Sequence[User],
     create_test_company: Company,
     session: AsyncSession,
+    init_employee_data: dict,
 ):
     employees = []
     for user in create_test_users:
-        user_data = {
-            "company_id": create_test_company.id,
-            "user_id": user.id,
-            "vk": "string",
-            "telegram": "string",
-            "extra_data": "string",
-            "is_active": user.is_active,
-            "phone_number": "string",
-        }
-        employee = Employee(**EmployeeIn(**user_data).model_dump())  # type: ignore[call-arg]
+        init_employee_data["company_id"] = create_test_company.id
+        init_employee_data["user_id"] = user.id
+        init_employee_data["is_active"] = user.is_active
+        employee = Employee(**EmployeeIn(**init_employee_data).model_dump())  # type: ignore[call-arg]
 
         session.add(employee)
         await session.commit()

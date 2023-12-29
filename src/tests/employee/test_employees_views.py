@@ -73,7 +73,7 @@ async def test_get_company_employees(
     async_client: AsyncClient,
     session: AsyncSession,
     init_active_employees_data: Sequence[Employee],
-    init_inactive_employees_data: Sequence[Employee],
+    create_employees_many: Sequence[Employee],
 ):
     """Тест проверяет получение пользователей из компании"""
     url = app.url_path_for(
@@ -84,6 +84,7 @@ async def test_get_company_employees(
 
     assert response.status_code == status.HTTP_200_OK
     assert len(response.json()) == len(init_active_employees_data)
+    assert len(response.json()) != len(create_employees_many)
     for data in response.json():
         assert data["user"]["is_active"] is True
 
