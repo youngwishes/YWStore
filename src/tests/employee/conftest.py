@@ -1,12 +1,7 @@
 from __future__ import annotations
-
-from typing import TYPE_CHECKING, Sequence
-
+from typing import TYPE_CHECKING
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.apps.employee.models import Employee
-from src.apps.employee.schemas import EmployeeIn
 
 if TYPE_CHECKING:
     from src.core.users.models import User

@@ -57,5 +57,5 @@ async def random_company(create_test_company_many: int, session: AsyncSession):
             Company.is_verified.is_(True),
         ),
     )
-    companies = result.scalars().all()
+    companies = result.unique().scalars().all()
     return companies[random.randint(0, len(companies) - 1)]

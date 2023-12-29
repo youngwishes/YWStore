@@ -37,9 +37,14 @@ class Employee(JSONRepresentationMixin, Base):
     )
     user: Mapped[User] = relationship(
         "User",
-        backref="employee",
+        back_populates="employee",
         lazy="joined",
         uselist=False,
+    )
+    company = relationship(
+        "Company",
+        back_populates="employees",
+        lazy="joined",
     )
     is_active: Mapped[bool] = mapped_column("Профиль активен", Boolean, default=True)
 
