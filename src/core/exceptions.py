@@ -7,3 +7,7 @@ class UniqueConstraintError(HTTPException):
 
 class NotFoundError(HTTPException):
     """Страница/объект не найден-а"""
+
+
+class IsOwnerError(HTTPException):
+    """Нет доступа к объекту."""

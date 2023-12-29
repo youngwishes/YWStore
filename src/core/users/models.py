@@ -45,6 +45,13 @@ class User(JSONRepresentationMixin, SQLAlchemyBaseUserTable[int], Base):
         cascade="all, delete-orphan",
         lazy="joined",
     )
+    employee = relationship(
+        "Employee",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="joined",
+        uselist=False,
+    )
     roles: Mapped[list[Role]] = association_proxy("roles_associations", "role")
 
     def __repr__(self) -> str:

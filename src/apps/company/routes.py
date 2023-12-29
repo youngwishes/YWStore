@@ -1,9 +1,11 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
-from fastapi import APIRouter, Depends, Body
+from fastapi import APIRouter, Depends, Body, status
 from src.apps.company.schemas import CompanyIn, CompanyOut, CompanyOptional
+from src.apps.roles.enums import CompanyRoles
 from src.core.users.auth import current_user, superuser
 from src.apps.company.depends import company_service
+from src.permissions.utils import permissions
 from src.core.exceptions import UniqueConstraintError, NotFoundError
 from src.core.http_response_schemas import (
     Unauthorized,
@@ -12,7 +14,7 @@ from src.core.http_response_schemas import (
     NotAllowed,
 )
 from src.core.users.models import User
-from fastapi import status
+from src.apps.company.validators import is_company_admin
 
 if TYPE_CHECKING:
     from src.apps.company.service import CompanyService
@@ -34,8 +36,8 @@ company_router = APIRouter()
 )
 async def register_company(
     company: CompanyIn,
-    _: User = Depends(superuser),
     service: CompanyService = Depends(company_service),
+    _: User = Depends(superuser),
 ) -> CompanyOut:
     if await service.get_by_name(name=company.name):
         raise UniqueConstraintError(
@@ -80,14 +82,17 @@ async def delete_companies(
     "/{pk}",
     status_code=status.HTTP_200_OK,
     description="Детальное представление компании",
+    response_model=CompanyOut,
     responses={
         status.HTTP_200_OK: {"model": CompanyOut},
         status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
+@permissions(allowed_roles=[CompanyRoles.ADMIN], validators=[is_company_admin])
 async def company_detail(
     pk: int,
     service: CompanyService = Depends(company_service),
+    _: User = Depends(current_user),
 ) -> CompanyOut:
     company = await service.get_by_pk(pk=pk)
     if not company:

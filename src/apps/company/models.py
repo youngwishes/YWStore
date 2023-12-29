@@ -51,7 +51,11 @@ class Company(JSONRepresentationMixin, Base):
     rating: Mapped[float] = mapped_column("Рейтинг", Float, nullable=True, index=True)
     is_hidden: Mapped[bool] = mapped_column("Скрыта в системе", Boolean, default=False)
     is_verified: Mapped[bool] = mapped_column("Подтверждена", Boolean, default=False)
-    employees: Mapped[list[Employee]] = relationship("Employee", backref="company")
+    employees: Mapped[list[Employee]] = relationship(
+        "Employee",
+        back_populates="company",
+        lazy="joined",
+    )
 
     def __repr__(self):
         return self.name

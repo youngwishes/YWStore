@@ -257,7 +257,7 @@ async def test_company_detail(
     """Тест на детальное представление компании"""
     url = app.url_path_for("company_detail", pk=random_company.id)
     response = await async_client.get(url)
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert check_object_data(random_company, data=response.json())
 
 
