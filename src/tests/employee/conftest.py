@@ -31,7 +31,7 @@ def init_employee_data(
 async def create_employee(
     session: AsyncSession,
     init_employee_data: dict,
-):
+) -> Employee:
     employee = Employee(**EmployeeIn(**init_employee_data).model_dump())  # type: ignore[call-arg]
     session.add(employee)
     await session.commit()
@@ -44,7 +44,7 @@ async def create_employees_many(
     create_test_users: Sequence[User],
     session: AsyncSession,
     init_employee_data: dict,
-):
+) -> Sequence[Employee]:
     employees = []
     for user in create_test_users:
         init_employee_data["user_id"] = user.id
@@ -59,7 +59,7 @@ async def create_employees_many(
 
 
 @pytest.fixture
-def active_employees(create_employees_many: Sequence[Employee]):
+def active_employees(create_employees_many: Sequence[Employee]) -> Sequence[Employee]:
     return [
         test_employee
         for test_employee in create_employees_many
@@ -68,7 +68,7 @@ def active_employees(create_employees_many: Sequence[Employee]):
 
 
 @pytest.fixture
-def inactive_employees(create_employees_many: Sequence[Employee]):
+def inactive_employees(create_employees_many: Sequence[Employee]) -> Sequence[Employee]:
     return [
         test_employee
         for test_employee in create_employees_many
