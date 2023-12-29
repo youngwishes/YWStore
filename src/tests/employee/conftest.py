@@ -30,15 +30,25 @@ def init_employee_data(
 
 
 @pytest.fixture
+async def create_employee(
+    session: AsyncSession,
+    init_employee_data: dict,
+):
+    employee = Employee(**EmployeeIn(**init_employee_data).model_dump())  # type: ignore[call-arg]
+    session.add(employee)
+    await session.commit()
+    await session.refresh(employee)
+    return employee
+
+
+@pytest.fixture
 async def create_employees_many(
     create_test_users: Sequence[User],
-    create_test_company: Company,
     session: AsyncSession,
     init_employee_data: dict,
 ):
     employees = []
     for user in create_test_users:
-        init_employee_data["company_id"] = create_test_company.id
         init_employee_data["user_id"] = user.id
         init_employee_data["is_active"] = user.is_active
         employee = Employee(**EmployeeIn(**init_employee_data).model_dump())  # type: ignore[call-arg]
