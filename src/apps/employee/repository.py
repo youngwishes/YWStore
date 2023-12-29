@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Sequence, TYPE_CHECKING
 
-from sqlalchemy import delete, update, true
+from sqlalchemy import update
 from sqlalchemy.orm import selectinload
 from src.core.interfaces import IRepository
 from src.apps.employee.models import Employee
@@ -21,8 +21,7 @@ class EmployeeRepository(IRepository):
     async def get(self, pk: int) -> Sequence[Employee]:
         employees = await self.session.execute(
             select(self.model)
-            .where(self.model.company_id == pk,
-                   self.model.is_active == true())
+            .where(self.model.company_id == pk)
             .options(selectinload(self.model.user)),
         )
         return employees.unique().scalars().all()
