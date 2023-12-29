@@ -72,28 +72,20 @@ async def test_add_new_employee(
 async def test_get_company_employees(
     async_client: AsyncClient,
     session: AsyncSession,
-    init_active_employees_data: Sequence[dict],
-    init_inactive_employees_data: Sequence[dict],
+    init_active_employees_data: Sequence[Employee],
+    init_inactive_employees_data: Sequence[Employee],
 ):
     """Тест проверяет получение пользователей из компании"""
-    url_to_add = app.url_path_for("add_employee")
-
-    response = await async_client.post(url_to_add, json=init_active_employees_data[0])
-    assert response.status_code == status.HTTP_201_CREATED
-
-    response = await async_client.post(url_to_add, json=init_inactive_employees_data[0])
-    assert response.status_code == status.HTTP_201_CREATED
-
     url = app.url_path_for(
         "get_employees",
-        company_pk=init_active_employees_data[0]["company_id"],
+        company_pk=init_active_employees_data[0].company_id,
     )
     response = await async_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
-    assert len(response.json()) == 1
-    assert response.json()[0]["user"]["id"] == init_active_employees_data[0]["user_id"]
-    assert response.json()[0]["user"]["is_active"] is True
+    assert len(response.json()) == len(init_active_employees_data)
+    for data in response.json():
+        assert data["user"]["is_active"] is True
 
 
 @pytest.mark.anyio
