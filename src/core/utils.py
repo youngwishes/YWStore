@@ -1,8 +1,12 @@
 from __future__ import annotations
-from typing import Optional, Any
+
+import functools
+from typing import Optional, Any, Callable
 from copy import deepcopy
 from pydantic import BaseModel, create_model
 from pydantic.fields import FieldInfo
+
+from src.core.users.models import User
 
 
 def make_field_partial(field: FieldInfo, default: Any = None) -> (Any, FieldInfo):
@@ -31,3 +35,19 @@ def optional(cls: type[BaseModel]) -> type[BaseModel]:
         __module__=cls.__module__,
         **fields_in_partial_mode,
     )
+
+
+async def is_member(user: User, role: str) -> bool:
+    return role in [role.name for role in user.roles]
+
+
+def allow_superuser(func: Callable) -> Callable:
+    @functools.wraps(func)
+    async def wrapped(*args, **kwargs) -> Any:
+        for key, value in kwargs.items():
+            if isinstance(value, User):
+                if value.is_superuser:
+                    return
+        return await func(*args, **kwargs)
+
+    return wrapped

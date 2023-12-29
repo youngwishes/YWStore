@@ -1,10 +1,12 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
-from fastapi import APIRouter, Depends, Body
+from fastapi import APIRouter, Depends, Body, status
 from src.apps.company.schemas import CompanyIn, CompanyOut, CompanyOptional
+from src.apps.roles.enums import CompanyRoles
 from src.core.users.auth import current_user, superuser
 from src.apps.company.depends import company_service
-from src.core.exceptions import UniqueConstraintError, NotFoundErrorError
+from src.permissions.utils import permissions
+from src.core.exceptions import UniqueConstraintError, NotFoundError
 from src.core.http_response_schemas import (
     Unauthorized,
     UniqueConstraint,
@@ -12,7 +14,7 @@ from src.core.http_response_schemas import (
     NotAllowed,
 )
 from src.core.users.models import User
-from fastapi import status
+from src.apps.company.validators import is_company_admin
 
 if TYPE_CHECKING:
     from src.apps.company.service import CompanyService
@@ -24,26 +26,18 @@ company_router = APIRouter()
     "",
     response_model=CompanyOut,
     responses={
-        status.HTTP_201_CREATED: {
-            "model": CompanyOut,
-            "description": "Компания успешно создана",
-        },
-        status.HTTP_400_BAD_REQUEST: {
-            "model": UniqueConstraint,
-            "description": "Компания с таким именем уже существует",
-        },
-        status.HTTP_401_UNAUTHORIZED: {
-            "model": Unauthorized,
-            "description": "Не авторизированный пользователь не может создать компанию",
-        },
+        status.HTTP_201_CREATED: {"model": CompanyOut},
+        status.HTTP_400_BAD_REQUEST: {"model": UniqueConstraint},
+        status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
+        status.HTTP_403_FORBIDDEN: {"model": NotAllowed},
     },
     status_code=status.HTTP_201_CREATED,
     description="Зарегистрировать новую компанию",
 )
 async def register_company(
     company: CompanyIn,
-    user: User = Depends(superuser),
     service: CompanyService = Depends(company_service),
+    _: User = Depends(superuser),
 ) -> CompanyOut:
     if await service.get_by_name(name=company.name):
         raise UniqueConstraintError(
@@ -59,6 +53,7 @@ async def register_company(
     response_model=Sequence[CompanyOut],
     description="Получить все компании",
     status_code=status.HTTP_200_OK,
+    responses={status.HTTP_200_OK: {"model": Sequence[CompanyOut]}},
 )
 async def companies_list(
     service: CompanyService = Depends(company_service),
@@ -70,10 +65,15 @@ async def companies_list(
     "",
     status_code=status.HTTP_204_NO_CONTENT,
     description="Удалить все компании",
+    responses={
+        status.HTTP_204_NO_CONTENT: {"model": None},
+        status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
+        status.HTTP_403_FORBIDDEN: {"model": NotAllowed},
+    },
 )
 async def delete_companies(
     service: CompanyService = Depends(company_service),
-    user: User = Depends(superuser),
+    _: User = Depends(superuser),
 ):
     await service.delete()
 
@@ -82,24 +82,21 @@ async def delete_companies(
     "/{pk}",
     status_code=status.HTTP_200_OK,
     description="Детальное представление компании",
+    response_model=CompanyOut,
     responses={
-        status.HTTP_200_OK: {
-            "model": CompanyOut,
-            "description": "Детальное представление компании",
-        },
-        status.HTTP_404_NOT_FOUND: {
-            "model": NotFound,
-            "description": "Компания не найдена",
-        },
+        status.HTTP_200_OK: {"model": CompanyOut},
+        status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
+@permissions(allowed_roles=[CompanyRoles.ADMIN], validators=[is_company_admin])
 async def company_detail(
     pk: int,
     service: CompanyService = Depends(company_service),
+    _: User = Depends(current_user),
 ) -> CompanyOut:
     company = await service.get_by_pk(pk=pk)
     if not company:
-        raise NotFoundErrorError(
+        raise NotFoundError(
             detail="Компания с идентификатором %s не была найдена" % pk,
             status_code=404,
         )
@@ -112,20 +109,17 @@ async def company_detail(
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         status.HTTP_204_NO_CONTENT: {"description": "Компания успешно удалена"},
-        status.HTTP_404_NOT_FOUND: {
-            "model": NotFound,
-            "description": "Компания не найдена",
-        },
+        status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
 async def delete_company(
     pk: int,
     service: CompanyService = Depends(company_service),
-    user: User = Depends(superuser),
+    _: User = Depends(superuser),
 ):
     is_deleted = await service.delete_by_pk(pk=pk)
     if not is_deleted:
-        raise NotFoundErrorError(
+        raise NotFoundError(
             detail="Компания с идентификатором %s не была найдена" % pk,
             status_code=404,
         )
@@ -136,25 +130,19 @@ async def delete_company(
     description="Обновить учетные данные компании",
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_200_OK: {
-            "model": CompanyOut,
-            "description": "Учетные данные успешно обновлены",
-        },
-        status.HTTP_404_NOT_FOUND: {
-            "model": NotFound,
-            "description": "Компания отсутствует в системе",
-        },
+        status.HTTP_200_OK: {"model": CompanyOut},
+        status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
 async def update_company(
     pk: int,
     company: CompanyIn,
     service: CompanyService = Depends(company_service),
-    user: User = Depends(current_user),
+    _: User = Depends(current_user),
 ) -> CompanyOut:
     company_exists = await service.get_by_pk(pk=pk)
     if not company_exists:
-        raise NotFoundErrorError(
+        raise NotFoundError(
             detail="Компания с идентификатором %s не была найдена" % pk,
             status_code=status.HTTP_404_NOT_FOUND,
         )
@@ -172,25 +160,19 @@ async def update_company(
     "/{pk}",
     description="Обновить учетные данные компании частично",
     responses={
-        status.HTTP_200_OK: {
-            "model": CompanyOut,
-            "description": "Учетные данные успешно обновлены",
-        },
-        status.HTTP_404_NOT_FOUND: {
-            "model": NotFound,
-            "description": "Компания отсутствует в системе",
-        },
+        status.HTTP_200_OK: {"model": CompanyOut},
+        status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
 async def update_company_partially(
     pk: int,
     company: CompanyOptional,
     service: CompanyService = Depends(company_service),
-    user: User = Depends(current_user),
+    _: User = Depends(current_user),
 ) -> CompanyOut:
     company_exists = await service.get_by_pk(pk=pk)
     if not company_exists:
-        raise NotFoundErrorError(
+        raise NotFoundError(
             detail="Компания с идентификатором %s не была найдена" % pk,
             status_code=status.HTTP_404_NOT_FOUND,
         )
@@ -207,33 +189,21 @@ async def update_company_partially(
 @company_router.patch(
     "/{pk}/verify",
     responses={
-        status.HTTP_200_OK: {
-            "model": CompanyOut,
-            "description": "Статус верификации успешно изменен",
-        },
-        status.HTTP_404_NOT_FOUND: {
-            "model": NotFound,
-            "description": "Компания не найдена",
-        },
-        status.HTTP_401_UNAUTHORIZED: {
-            "model": Unauthorized,
-            "description": "Не авторизован",
-        },
-        status.HTTP_403_FORBIDDEN: {
-            "model": NotAllowed,
-            "description": "У вас недостаточно прав",
-        },
+        status.HTTP_200_OK: {"model": CompanyOut},
+        status.HTTP_404_NOT_FOUND: {"model": NotFound},
+        status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
+        status.HTTP_403_FORBIDDEN: {"model": NotAllowed},
     },
 )
 async def verify_company(
     pk: int,
     is_verified: bool = Body(default=True, embed=True),
-    user: User = Depends(superuser),
+    _: User = Depends(superuser),
     service: CompanyService = Depends(company_service),
 ) -> CompanyOut:
     company = await service.update_is_verified(pk=pk, is_verified=is_verified)
     if not company:
-        raise NotFoundErrorError(
+        raise NotFoundError(
             detail="Компания с идентификатором %s не была найдена" % pk,
             status_code=status.HTTP_404_NOT_FOUND,
         )
@@ -243,33 +213,21 @@ async def verify_company(
 @company_router.patch(
     "/{pk}/hide",
     responses={
-        status.HTTP_200_OK: {
-            "model": CompanyOut,
-            "description": "Отображение компании в системе изменено",
-        },
-        status.HTTP_404_NOT_FOUND: {
-            "model": NotFound,
-            "description": "Компания не найдена",
-        },
-        status.HTTP_401_UNAUTHORIZED: {
-            "model": Unauthorized,
-            "description": "Не авторизован",
-        },
-        status.HTTP_403_FORBIDDEN: {
-            "model": NotAllowed,
-            "description": "У вас недостаточно прав",
-        },
+        status.HTTP_200_OK: {"model": CompanyOut},
+        status.HTTP_404_NOT_FOUND: {"model": NotFound},
+        status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
+        status.HTTP_403_FORBIDDEN: {"model": NotAllowed},
     },
 )
 async def hide_company(
     pk: int,
     is_hidden: bool = Body(default=True, embed=True),
-    user: User = Depends(superuser),
+    _: User = Depends(superuser),
     service: CompanyService = Depends(company_service),
 ) -> CompanyOut:
     company = await service.update_is_hidden(pk=pk, is_hidden=is_hidden)
     if not company:
-        raise NotFoundErrorError(
+        raise NotFoundError(
             detail="Компания с идентификатором %s не была найдена" % pk,
             status_code=status.HTTP_404_NOT_FOUND,
         )

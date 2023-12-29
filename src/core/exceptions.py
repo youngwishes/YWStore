@@ -5,5 +5,9 @@ class UniqueConstraintError(HTTPException):
     """Ограничение на уникальность объектов"""
 
 
-class NotFoundErrorError(HTTPException):
+class NotFoundError(HTTPException):
     """Страница/объект не найден-а"""
+
+
+class IsOwnerError(HTTPException):
+    """Нет доступа к объекту."""
