@@ -4,7 +4,7 @@ from fastapi import status
 from src.apps.roles.enums import CompanyRoles
 from src.apps.roles.exceptions import AdminRequiredError
 from src.core.exceptions import IsOwnerError
-from src.core.utils import is_member, allow_superuser
+from src.permissions.utils import allow_superuser, is_member
 
 if TYPE_CHECKING:
     from src.core.users.models import User
