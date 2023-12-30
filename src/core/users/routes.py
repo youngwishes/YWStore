@@ -35,51 +35,20 @@ async def register_user(
         )
 
 
-@users_router.get(
-    "/{user_id}",
-    description="Получить пользователя по идентификатору.",
-    response_model=UserRead,
-    status_code=status.HTTP_200_OK,
-    responses={
-        status.HTTP_200_OK: {"model": UserRead},
-        status.HTTP_404_NOT_FOUND: {"model": NotFound},
-    },
-)
-async def users_by_id(
-    user_id: int,
-    manager: UserManager = Depends(get_user_manager),
-) -> UserRead:
-    try:
-        return await manager.get(id=user_id)
-    except UserNotExists:
-        raise NotFoundError(
-            detail="Пользователь с идентификатором %s не был найден" % user_id,
-            status_code=404,
-        )
-
-
 @users_router.delete(
-    "/{user_id}",
+    "/",
     description="Удалить пользователя",
     responses={
         status.HTTP_204_NO_CONTENT: {"description": "Пользователь успешно удален."},
-        status.HTTP_404_NOT_FOUND: {"model": NotFound},
         status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
     },
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def user_delete(
-    user_id: int,
     manager: UserManager = Depends(get_user_manager),
     _: User = Depends(current_user),
 ):
-    try:
-        await manager.delete(manager.get(id=user_id))
-    except UserNotExists:
-        raise NotFoundError(
-            detail="Пользователь с идентификатором %s не был найден" % user_id,
-            status_code=404,
-        )
+    await manager.delete(await manager.get(id=_.id))
 
 
 @users_router.put(
@@ -114,11 +83,12 @@ async def user_edit(
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
-        status.HTTP_403_FORBIDDEN: {"model": UserRead},
+        status.HTTP_200_OK: {"model": UserRead},
     },
+    response_model=UserRead,
 )
 async def get_user(
     manager: UserManager = Depends(get_user_manager),
     _: User = Depends(current_user),
 ) -> UserRead:
-    return manager.get(_.id)
+    return await manager.get(_.id)

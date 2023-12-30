@@ -2,6 +2,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import pytest
 from fastapi import status
+from sqlalchemy import select
+
 from src.tests import defaults
 from src.tests.helpers import get_objects_count, get_object, check_object_data
 from src.core.users.models import User
@@ -21,14 +23,18 @@ async def test_register_view(
 ):
     """Тест на регистрацию пользователя от имени неавторизированного пользователя"""
     users_count_do = await get_objects_count(User, session)
+    user_stmt = await session.execute(
+        select(User).where(User.email == get_test_user_data["email"]),
+    )
+    assert user_stmt.scalar_one_or_none() is None
 
     url = app.url_path_for("register_user")
     response = await async_client.post(url, json=get_test_user_data)
     users_count_after = await get_objects_count(User, session)
-    user_object: User = await get_object(User, session)
 
     assert response.status_code == status.HTTP_201_CREATED
     assert users_count_do + 1 == users_count_after
+    user_object = await get_object(User, session)
     assert await check_object_data(user_object, get_test_user_data)
     assert user_object.is_verified is False
 
@@ -56,3 +62,58 @@ async def test_auth_view(
 
     await session.refresh(create_test_user)
     assert create_test_user.last_login
+
+
+@pytest.mark.anyio
+async def test_get_user_by_authorized(
+    authorized_client: AsyncClient,
+    get_test_user_data: dict,
+):
+    """Тест на получение информации о текущем пользователе от авторизированного пользователя"""
+    url = app.url_path_for("get_user")
+    response = await authorized_client.get(url)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["email"] == get_test_user_data["email"]
+
+
+@pytest.mark.anyio
+async def test_get_user_by_unauthorized(async_client: AsyncClient):
+    """Тест на получение информации о текущем пользователе от неавторизированного пользователя"""
+    url = app.url_path_for("get_user")
+    response = await async_client.get(url)
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.anyio
+async def test_delete_user_by_authorized(
+    authorized_client: AsyncClient,
+    create_test_user: User,
+    session: AsyncSession,
+):
+    "Тест на удаление пользователя от имени авторизированного пользователя"
+    users_count_do = await get_objects_count(User, session)
+
+    url = app.url_path_for("user_delete")
+    response = await authorized_client.delete(url)
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    users_count_after = await get_objects_count(User, session)
+    assert users_count_after == users_count_do - 1
+    user_stmt = await session.execute(
+        select(User).where(User.id == create_test_user.id),
+    )
+    assert user_stmt.scalar_one_or_none() is None
+
+
+@pytest.mark.anyio
+async def test_delete_user_by_unauthorized(
+    async_client: AsyncClient,
+    session: AsyncSession,
+):
+    "Тест на удаление пользователя от имени неавторизированного пользователя"
+    url = app.url_path_for("user_delete")
+    response = await async_client.delete(url)
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
