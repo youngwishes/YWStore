@@ -117,3 +117,28 @@ async def test_delete_user_by_unauthorized(
     response = await async_client.delete(url)
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.anyio
+async def test_edit_user_by_authorized(
+    authorized_client: AsyncClient,
+    get_test_user_data: dict,
+    session: AsyncSession,
+):
+    url = app.url_path_for("user_edit")
+    to_change_email = "example_user_email_test1@example.com"
+    get_test_user_data["email"] = to_change_email
+    response = await authorized_client.put(url, json=get_test_user_data)
+
+    assert response.status_code == status.HTTP_200_OK
+    user_stmt = await session.execute(
+        select(User).where(User.email == to_change_email),
+    )
+    assert user_stmt.unique().scalar_one_or_none() is not None
+
+
+@pytest.mark.anyio
+async def test_edit_user_by_unauthorized(async_client: AsyncClient):
+    url = app.url_path_for("user_edit")
+    response = await async_client.put(url)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED

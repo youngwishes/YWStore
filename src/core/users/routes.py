@@ -1,8 +1,8 @@
 from fastapi import APIRouter, status, Depends
-from fastapi_users.exceptions import UserNotExists, UserAlreadyExists
+from fastapi_users.exceptions import UserAlreadyExists
 
-from src.core.exceptions import UniqueConstraintError, NotFoundError
-from src.core.http_response_schemas import UniqueConstraint, NotFound, Unauthorized
+from src.core.exceptions import UniqueConstraintError
+from src.core.http_response_schemas import UniqueConstraint, Unauthorized
 from src.core.users.auth import current_user
 from src.core.users.depends import get_user_manager
 from src.core.users.manager import UserManager
@@ -52,29 +52,25 @@ async def user_delete(
 
 
 @users_router.put(
-    "/{user_id}",
+    "/",
     description="Обновить учетные данные пользователя",
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {"model": UserUpdate},
-        status.HTTP_404_NOT_FOUND: {"model": NotFound},
         status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
     },
+    response_model=UserRead,
 )
 async def user_edit(
-    user_id: int,
     user: UserUpdate,
     manager: UserManager = Depends(get_user_manager),
     _: User = Depends(current_user),
 ) -> UserRead:
-    try:
-        currently_user = await manager.get(id=user_id)
-    except UserNotExists:
-        raise NotFoundError(
-            detail="Пользователь с идентификатором %s не был найден" % user_id,
-            status_code=404,
-        )
-    return await manager.update(user_update=user, user=currently_user, safe=True)
+    return await manager.update(
+        user_update=user,
+        user=await manager.get(_.id),
+        safe=True,
+    )
 
 
 @users_router.get(
