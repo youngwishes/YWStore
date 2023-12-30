@@ -1,12 +1,13 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from fastapi_users import BaseUserManager, IntegerIDMixin
-from src.core.users.models import User
-from src.core.config import get_settings
-from src.core.users.schemas import UserUpdate
 
+from src.core.config import get_settings
+from src.core.users.models import User
+from src.core.users.schemas import UserUpdate
 
 if TYPE_CHECKING:
     from fastapi import Request
