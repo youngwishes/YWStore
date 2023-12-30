@@ -30,7 +30,8 @@ async def register_user(
         return await manager.create(user_create=user, safe=True)
     except UserAlreadyExists:
         raise UniqueConstraintError(
-            detail="Пользователь с этими данными уже зарегестрирован в системе.",
+            detail="Пользователь с почтой <%s>  уже зарегестрирован в системе."
+            % user.email,
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
