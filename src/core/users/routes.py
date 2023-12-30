@@ -75,7 +75,7 @@ async def user_edit(
 
 
 @users_router.get(
-    "/@me",
+    "/me",
     description="Получение информации о текущем пользователе.",
     status_code=status.HTTP_200_OK,
     responses={
