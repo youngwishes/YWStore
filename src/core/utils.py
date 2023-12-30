@@ -1,12 +1,14 @@
 from __future__ import annotations
-
-import functools
-from typing import Optional, Any, Callable
+import os
+from pathlib import Path
+from typing import Optional, Any
 from copy import deepcopy
 from pydantic import BaseModel, create_model
 from pydantic.fields import FieldInfo
+from importlib import import_module
+from src.core.config import get_settings
 
-from src.core.users.models import User
+settings = get_settings()
 
 
 def make_field_partial(field: FieldInfo, default: Any = None) -> (Any, FieldInfo):
@@ -37,17 +39,19 @@ def optional(cls: type[BaseModel]) -> type[BaseModel]:
     )
 
 
-async def is_member(user: User, role: str) -> bool:
-    return role in [role.name for role in user.roles]
-
-
-def allow_superuser(func: Callable) -> Callable:
-    @functools.wraps(func)
-    async def wrapped(*args, **kwargs) -> Any:
-        for key, value in kwargs.items():
-            if isinstance(value, User):
-                if value.is_superuser:
-                    return
-        return await func(*args, **kwargs)
-
-    return wrapped
+def import_schema(schema_class_name: str) -> type[BaseModel]:
+    schema_file_name = "schemas"
+    exclude = ["__pycache__", "__init__.py"]
+    for app_name in os.listdir(settings.BASE_MODULE_PATH):
+        if app_name not in exclude:
+            app_module_path = Path.joinpath(
+                settings.BASE_MODULE_PATH,
+                app_name,
+                schema_file_name,
+            )
+            module_path = ".".join(str(app_module_path).split("/"))
+            module = import_module(module_path)
+            try:
+                return getattr(module, schema_class_name)
+            except AttributeError:
+                ...

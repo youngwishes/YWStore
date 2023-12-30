@@ -9,7 +9,8 @@ class YWStoreBaseSettings(BaseSettings):
     PROJECT_NAME: str = "YWStore"
     API_VERSION_INT: int = 1
     BASE_API_PREFIX: str = f"/api/v{API_VERSION_INT}"
-    BASE_DIR: str = str(Path().absolute())
+    ABSOLUTE_BASE_DIR: Path = Path().absolute()
+    BASE_MODULE_PATH: Path = Path("src", "apps")
 
     class ConfigDict:
         extra = "allow"

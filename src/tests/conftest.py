@@ -7,16 +7,18 @@ import pytest
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import text
+from sqlalchemy.sql import text, select
 from sqlalchemy.pool import NullPool
 
 from src.apps.company.enums import CompanyType
 from src.apps.company.models import Company
+from src.apps.employee.models import Employee
+from src.apps.roles.enums import CompanyRoles
 from src.main import app
 from src.tests import defaults
 from src.core.config import get_settings
 from src.core.sql.database import Base, get_session
-from src.core.users.models import User
+from src.core.users.models import User, Role
 from src.core.users.schemas import UserCreate
 
 from httpx import AsyncClient
@@ -53,7 +55,12 @@ async def engine() -> AsyncGenerator[AsyncEngine]:
 
 @pytest.fixture(scope="session")
 def async_session_class(engine: AsyncEngine) -> sessionmaker[AsyncSession]:
-    return sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)  # type: ignore[call-arg]
+    return sessionmaker(  # type: ignore[call-arg]
+        bind=engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autoflush=False,
+    )
 
 
 @pytest.fixture(scope="session")
@@ -170,8 +177,23 @@ async def create_test_user(
 
 
 @pytest.fixture
+def init_employee_data(
+    create_test_company: Company,
+    create_test_user: User,
+):
+    return {
+        "company_id": create_test_company.id,
+        "user_id": create_test_user.id,
+        "vk": "string",
+        "telegram": "string",
+        "extra_data": "string",
+        "is_active": True,
+        "phone_number": "string",
+    }
+
+
+@pytest.fixture
 async def create_test_users(
-    session: AsyncSession,
     get_test_users_data: list[dict],
     get_test_user_manager: UserManager,
 ) -> Sequence[User]:
@@ -206,3 +228,56 @@ async def create_test_company(
     await session.commit()
     await session.refresh(company)
     yield company
+
+
+@pytest.fixture
+async def create_company_roles(session: AsyncSession) -> list[Role]:
+    for role_name in CompanyRoles.list():
+        role = Role(name=role_name)  # type: ignore[call-arg]
+        session.add(role)
+    await session.commit()
+
+
+@pytest.fixture(params=CompanyRoles.list())
+async def user_with_any_role(
+    request,
+    create_test_user: User,
+    session: AsyncSession,
+    create_company_roles,
+) -> User:
+    role = await session.execute(select(Role).where(Role.name == request.param))
+    create_test_user.roles.append(role.unique().scalar_one())
+    session.add(create_test_user)
+    await session.commit()
+    return create_test_user
+
+
+@pytest.fixture
+async def employee_with_any_role(
+    user_with_any_role: User,
+    init_employee_data: dict,
+    session: AsyncSession,
+):
+    init_employee_data["user_id"] = user_with_any_role.id
+    employee = Employee(**init_employee_data)
+    session.add(employee)
+    await session.commit()
+    await session.refresh(employee)
+    return employee
+
+
+@pytest.fixture
+async def any_employee_client(
+    employee_with_any_role: Employee,
+    get_test_user_data: dict,
+    async_client: AsyncClient,
+):
+    url = app.url_path_for("auth:jwt.login")
+    credentials = {
+        "username": get_test_user_data.get("email"),
+        "password": get_test_user_data.get("password"),
+    }
+    response = await async_client.post(url, data=credentials)
+    access_token = response.json().get("access_token")
+    async_client.headers = {"Authorization": f"Bearer {access_token}"}
+    yield async_client
