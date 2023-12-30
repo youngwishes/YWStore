@@ -3,7 +3,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 from fastapi import status
+
+from src.apps.roles.enums import CompanyRoles
+from src.core.users.models import User
 from src.main import app
+from src.permissions.utils import is_member
 from src.tests.helpers import (
     get_objects_count,
     get_object,
@@ -82,32 +86,41 @@ async def test_register_new_company_unauthorized(
 
 @pytest.mark.anyio
 async def test_update_company(
-    authorized_client: AsyncClient,
+    any_employee_client: AsyncClient,
     session: AsyncSession,
     create_test_company: Company,
     update_company_data: dict,
+    create_test_user: User,
 ):
     """Тест проверяет корректное обновление компании авторизованным юзером"""
     url = app.url_path_for("update_company", pk=create_test_company.id)
-    response = await authorized_client.put(url, json=update_company_data)
+    response = await any_employee_client.put(url, json=update_company_data)
     obj = await get_object(Company, session)
-    assert response.status_code == status.HTTP_200_OK
-    assert await check_object_data(obj, update_company_data)
+    if await is_member(create_test_user, CompanyRoles.ADMIN):
+        assert response.status_code == status.HTTP_200_OK
+        assert await check_object_data(obj, update_company_data)
+    else:
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert not await check_object_data(obj, update_company_data)
 
 
 @pytest.mark.anyio
 async def test_update_company_with_exists_name(
-    authorized_client: AsyncClient,
+    any_employee_client: AsyncClient,
     session: AsyncSession,
     create_test_company: Company,
     random_company: Company,
     update_company_data: dict,
+    create_test_user: User,
 ):
     """Тест проверяет запрет на обновление названия компании если такое уже есть в системе"""
     url = app.url_path_for("update_company", pk=create_test_company.id)
     update_company_data["name"] = random_company.name
-    response = await authorized_client.put(url, json=update_company_data)
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    response = await any_employee_client.put(url, json=update_company_data)
+    if await is_member(create_test_user, CompanyRoles.ADMIN):
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+    else:
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 @pytest.mark.anyio
@@ -137,23 +150,27 @@ async def test_partially_update_company(
     url = app.url_path_for("update_company_partially", pk=create_test_company.id)
     response = await authorized_client.patch(url, json=update_partial_company_data)
     obj = await get_object(Company, session)
-    assert response.status_code == status.HTTP_200_OK
-    assert await check_object_data(obj, update_partial_company_data)
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert not await check_object_data(obj, update_partial_company_data)
 
 
 @pytest.mark.anyio
 async def test_partially_update_company_with_exists_name(
-    authorized_client: AsyncClient,
+    any_employee_client: AsyncClient,
     session: AsyncSession,
     random_company: Company,
     update_partial_company_data: dict,
     create_test_company: Company,
+    create_test_user: User,
 ):
     """Тест проверяет частичное обновление компании если имя уже существует в системе"""
     url = app.url_path_for("update_company_partially", pk=create_test_company.id)
     update_partial_company_data["name"] = random_company.name
-    response = await authorized_client.patch(url, json=update_partial_company_data)
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    response = await any_employee_client.patch(url, json=update_partial_company_data)
+    if await is_member(create_test_user, CompanyRoles.ADMIN):
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+    else:
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 @pytest.mark.anyio
@@ -257,7 +274,7 @@ async def test_company_detail(
     """Тест на детальное представление компании"""
     url = app.url_path_for("company_detail", pk=random_company.id)
     response = await async_client.get(url)
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.status_code == status.HTTP_200_OK
     assert check_object_data(random_company, data=response.json())
 
 

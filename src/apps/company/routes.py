@@ -88,11 +88,9 @@ async def delete_companies(
         status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
-@permissions(allowed_roles=[CompanyRoles.ADMIN], validators=[is_company_admin])
 async def company_detail(
     pk: int,
     service: CompanyService = Depends(company_service),
-    _: User = Depends(current_user),
 ) -> CompanyOut:
     company = await service.get_by_pk(pk=pk)
     if not company:
@@ -129,11 +127,13 @@ async def delete_company(
     "/{pk}",
     description="Обновить учетные данные компании",
     status_code=status.HTTP_200_OK,
+    response_model=CompanyOut,
     responses={
         status.HTTP_200_OK: {"model": CompanyOut},
         status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
+@permissions(allowed_roles=[CompanyRoles.ADMIN], validators=[is_company_admin])
 async def update_company(
     pk: int,
     company: CompanyIn,
@@ -159,11 +159,13 @@ async def update_company(
 @company_router.patch(
     "/{pk}",
     description="Обновить учетные данные компании частично",
+    response_model=CompanyOut,
     responses={
         status.HTTP_200_OK: {"model": CompanyOut},
         status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
+@permissions(allowed_roles=[CompanyRoles.ADMIN], validators=[is_company_admin])
 async def update_company_partially(
     pk: int,
     company: CompanyOptional,
