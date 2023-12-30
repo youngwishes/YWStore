@@ -22,7 +22,7 @@ async def test_register_view(
     session: AsyncSession,
 ):
     """Тест на регистрацию пользователя от имени неавторизированного пользователя"""
-    users_count_do = await get_objects_count(User, session)
+    users_count_before = await get_objects_count(User, session)
     user_stmt = await session.execute(
         select(User).where(User.email == get_test_user_data["email"]),
     )
@@ -33,7 +33,7 @@ async def test_register_view(
     users_count_after = await get_objects_count(User, session)
 
     assert response.status_code == status.HTTP_201_CREATED
-    assert users_count_do + 1 == users_count_after
+    assert users_count_before + 1 == users_count_after
     user_object = await get_object(User, session)
     assert await check_object_data(user_object, get_test_user_data)
     assert user_object.is_verified is False
@@ -93,14 +93,14 @@ async def test_delete_user_by_authorized(
     session: AsyncSession,
 ):
     "Тест на удаление пользователя от имени авторизированного пользователя"
-    users_count_do = await get_objects_count(User, session)
+    users_count_before = await get_objects_count(User, session)
 
     url = app.url_path_for("user_delete")
     response = await authorized_client.delete(url)
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
     users_count_after = await get_objects_count(User, session)
-    assert users_count_after == users_count_do - 1
+    assert users_count_after == users_count_before - 1
     user_stmt = await session.execute(
         select(User).where(User.id == create_test_user.id),
     )
