@@ -3,24 +3,34 @@ from typing import TYPE_CHECKING
 import pytest
 from fastapi import status
 from src.tests import defaults
+from src.tests.helpers import get_objects_count, get_object, check_object_data
+from src.core.users.models import User
+from src.main import app
 
 if TYPE_CHECKING:
     from httpx import AsyncClient
     from src.main import YWStoreAPI
-    from src.core.users.models import User
     from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.anyio
 async def test_register_view(
     async_client: AsyncClient,
-    test_app: YWStoreAPI,
     get_test_user_data: dict,
+    session: AsyncSession,
 ):
-    """Тест на регистрацию пользователя"""
-    url = test_app.url_path_for("register:register")
+    """Тест на регистрацию пользователя от имени неавторизированного пользователя"""
+    users_count_do = await get_objects_count(User, session)
+
+    url = app.url_path_for("register_user")
     response = await async_client.post(url, json=get_test_user_data)
+    users_count_after = await get_objects_count(User, session)
+    user_object: User = await get_object(User, session)
+
     assert response.status_code == status.HTTP_201_CREATED
+    assert users_count_do + 1 == users_count_after
+    assert await check_object_data(user_object, get_test_user_data)
+    assert user_object.is_verified is False
 
 
 @pytest.mark.anyio

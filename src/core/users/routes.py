@@ -1,5 +1,5 @@
 from fastapi import APIRouter, status, Depends
-from fastapi_users.exceptions import UserNotExists
+from fastapi_users.exceptions import UserNotExists, UserAlreadyExists
 
 from src.core.exceptions import UniqueConstraintError, NotFoundError
 from src.core.http_response_schemas import UniqueConstraint, NotFound, Unauthorized
@@ -14,24 +14,25 @@ users_router = APIRouter()
 
 @users_router.post(
     "",
-    response_model=UserCreate,
+    response_model=UserRead,
     responses={
-        status.HTTP_201_CREATED: {"model": UserCreate},
+        status.HTTP_201_CREATED: {"model": UserRead},
         status.HTTP_400_BAD_REQUEST: {"model": UniqueConstraint},
     },
     description="Зарегистрировать нового пользователя",
+    status_code=status.HTTP_201_CREATED,
 )
 async def register_user(
     user: UserCreate,
     manager: UserManager = Depends(get_user_manager),
-) -> UserCreate:
-    if await manager.get_by_email(user_email=user.email):
+) -> UserRead:
+    try:
+        return await manager.create(user_create=user, safe=True)
+    except UserAlreadyExists:
         raise UniqueConstraintError(
-            detail="Пользователь с емайлом <%s> уже зарегестрирован в системе."
-            % user.email,
+            detail="Пользователь с этими данными уже зарегестрирован в системе.",
             status_code=status.HTTP_400_BAD_REQUEST,
         )
-    return await manager.create(user_create=user)
 
 
 @users_router.get(
@@ -104,7 +105,7 @@ async def user_edit(
             detail="Пользователь с идентификатором %s не был найден" % user_id,
             status_code=404,
         )
-    return await manager.update(user_update=user, user=currently_user)
+    return await manager.update(user_update=user, user=currently_user, safe=True)
 
 
 @users_router.get(
