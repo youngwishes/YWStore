@@ -128,6 +128,10 @@ async def test_edit_user_by_authorized(
     url = app.url_path_for("user_edit")
     to_change_email = "example_user_email_test1@example.com"
     get_test_user_data["email"] = to_change_email
+    user_stmt = await session.execute(
+        select(User).where(User.email == to_change_email),
+    )
+    assert user_stmt.unique().scalar_one_or_none() is None
     response = await authorized_client.put(url, json=get_test_user_data)
 
     assert response.status_code == status.HTTP_200_OK
