@@ -1,8 +1,10 @@
+from datetime import datetime
 from typing import Optional
+
 from fastapi_users import models
 from fastapi_users import schemas
 from pydantic import EmailStr
-from datetime import datetime
+
 from src.apps.roles.schemas import RoleOut
 
 

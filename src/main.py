@@ -2,12 +2,12 @@ from fastapi import FastAPI
 from src.core.users.auth import (
     auth_router,
     register_router,
-    users_router,
 )
 from src.core.config import get_settings
 from src.apps.company.routes import company_router
 from src.apps.employee.routes import employee_router
 from src.apps.roles.routes import roles_router
+from src.core.users.routes import users_router
 
 description = """
 # Статус - в разработке ⚙️
@@ -49,7 +49,7 @@ app = YWStoreAPI(
 
 app.include_router(auth_router, tags=["auth"], prefix="/auth/jwt")
 app.include_router(register_router, tags=["auth"], prefix="/auth")
-app.include_router(users_router, tags=["users"], prefix="/users")
 app.include_router(company_router, tags=["company"], prefix="/company")
 app.include_router(employee_router, tags=["employees"], prefix="/employees")
 app.include_router(roles_router, tags=["roles"], prefix="/roles")
+app.include_router(users_router, tags=["users"], prefix="/users")
