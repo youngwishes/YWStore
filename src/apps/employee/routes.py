@@ -1,26 +1,27 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Sequence
+
 from fastapi import APIRouter, status, Depends
+from fastapi_users.exceptions import UserNotExists
+
+from src.apps.company.depends import company_service
+from src.apps.employee.depends import employee_service
 from src.apps.employee.models import Employee
 from src.apps.employee.schemas import (
     EmployeeIn,
     EmployeeOut,
-    BaseEmployee,
     EmployeeOptional,
 )
+from src.core.exceptions import NotFoundError, UniqueConstraintError
 from src.core.http_response_schemas import (
     NotFound,
     NotAllowed,
     Unauthorized,
     UniqueConstraint,
 )
-from src.core.exceptions import NotFoundError, UniqueConstraintError
-from src.apps.company.depends import company_service
-from src.apps.employee.depends import employee_service
 from src.core.users.auth import superuser
 from src.core.users.depends import get_user_manager
-from fastapi_users.exceptions import UserNotExists
-
 from src.core.users.models import User
 
 if TYPE_CHECKING:
@@ -121,10 +122,11 @@ async def delete_employee(
     description="Частичное обновление данных сотрудника.",
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_200_OK: {"model": BaseEmployee},
+        status.HTTP_200_OK: {"model": EmployeeOut},
         status.HTTP_404_NOT_FOUND: {"model": NotFound},
+        status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
     },
-    response_model=BaseEmployee,
+    response_model=EmployeeOut,
 )
 async def update_employee_partially(
     employee_pk: int,
@@ -153,10 +155,11 @@ async def update_employee_partially(
     description="Обновление данных сотрудника.",
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_200_OK: {"model": BaseEmployee},
+        status.HTTP_200_OK: {"model": EmployeeOut},
         status.HTTP_404_NOT_FOUND: {"model": NotFound},
+        status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
     },
-    response_model=BaseEmployee,
+    response_model=EmployeeOut,
 )
 async def update_employee(
     employee_pk: int,
