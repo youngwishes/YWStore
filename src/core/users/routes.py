@@ -46,9 +46,9 @@ async def register_user(
 )
 async def user_delete(
     manager: UserManager = Depends(get_user_manager),
-    _: User = Depends(current_user),
+    user: User = Depends(current_user),
 ):
-    await manager.delete(await manager.get(id=_.id))
+    await manager.delete(await manager.get(id=user.id))
 
 
 @users_router.put(
@@ -62,13 +62,13 @@ async def user_delete(
     response_model=UserRead,
 )
 async def user_edit(
-    user: UserUpdate,
+    user_to_update: UserUpdate,
     manager: UserManager = Depends(get_user_manager),
-    _: User = Depends(current_user),
+    user: User = Depends(current_user),
 ) -> UserRead:
     return await manager.update(
-        user_update=user,
-        user=await manager.get(_.id),
+        user_update=user_to_update,
+        user=await manager.get(user.id),
         safe=True,
     )
 
@@ -85,6 +85,6 @@ async def user_edit(
 )
 async def get_user(
     manager: UserManager = Depends(get_user_manager),
-    _: User = Depends(current_user),
+    user: User = Depends(current_user),
 ) -> UserRead:
-    return await manager.get(_.id)
+    return await manager.get(user.id)
