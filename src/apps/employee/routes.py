@@ -2,7 +2,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 from fastapi import APIRouter, status, Depends
 from src.apps.employee.models import Employee
-from src.apps.employee.schemas import EmployeeIn, EmployeeOut
+from src.apps.employee.schemas import (
+    EmployeeIn,
+    EmployeeOut,
+    BaseEmployee,
+    EmployeeOptional,
+)
 from src.core.http_response_schemas import (
     NotFound,
     NotAllowed,
@@ -104,8 +109,71 @@ async def delete_employee(
 ):
     if service.check_if_exists(company_pk=company_pk, user_pk=employee_pk) is None:
         raise NotFoundError(
-            detail="Компания с идентификатором %s или сотрудник с идентификатором %s не были найдены."
+            detail="Компания с идентификатором %s или сотрудник с идентификатором <%s> не были найдены."
             % (company_pk, employee_pk),
             status_code=status.HTTP_404_NOT_FOUND,
         )
     await service.delete_from_company_by_pk(company_pk=company_pk, pk=employee_pk)
+
+
+@employee_router.put(
+    "/{company_pk}/{employee_pk}",
+    description="Частичное обновление данных сотрудника.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"model": BaseEmployee},
+        status.HTTP_404_NOT_FOUND: {"model": NotFound},
+    },
+    response_model=BaseEmployee,
+)
+async def update_employee_partially(
+    employee_pk: int,
+    company_pk: int,
+    employee: EmployeeOptional,
+    service: EmployeeService = Depends(employee_service),
+    _: User = Depends(superuser),
+) -> EmployeeOut:
+    if service.check_if_exists(company_pk=company_pk, user_pk=employee_pk) is None:
+        raise NotFoundError(
+            detail="Компания с идентификатором %s или сотрудник с идентификатором <%s> не были найдены."
+            % (company_pk, employee_pk),
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    updated_employee = await service.update(
+        pk=employee_pk,
+        company_pk=company_pk,
+        data=employee,
+        partial=True,
+    )
+    return updated_employee
+
+
+@employee_router.put(
+    "/{company_pk}/{employee_pk}",
+    description="Обновление данных сотрудника.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"model": BaseEmployee},
+        status.HTTP_404_NOT_FOUND: {"model": NotFound},
+    },
+    response_model=BaseEmployee,
+)
+async def update_employee(
+    employee_pk: int,
+    company_pk: int,
+    employee: EmployeeIn,
+    service: EmployeeService = Depends(employee_service),
+    _: User = Depends(superuser),
+) -> EmployeeOut:
+    if service.check_if_exists(company_pk=company_pk, user_pk=employee_pk) is None:
+        raise NotFoundError(
+            detail="Компания с идентификатором %s или сотрудник с идентификатором <%s> не были найдены."
+            % (company_pk, employee_pk),
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    updated_employee = await service.update(
+        pk=employee_pk,
+        company_pk=company_pk,
+        data=employee,
+    )
+    return updated_employee

@@ -8,7 +8,7 @@ from src.apps.employee.models import Employee
 from sqlalchemy.sql import select
 
 if TYPE_CHECKING:
-    from src.apps.employee.schemas import EmployeeIn
+    from src.apps.employee.schemas import EmployeeIn, EmployeeOptional
     from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -47,8 +47,23 @@ class EmployeeRepository(IRepository):
         )
         return employee.unique().scalar_one_or_none()
 
-    async def update(self, pk, data, partial):
-        pass
+    async def update(
+        self,
+        pk: int,
+        company_pk: int,
+        data: EmployeeIn | EmployeeOptional,
+        partial: bool = False,
+    ) -> Employee:
+        updated_employee = await self.session.execute(
+            update(self.model)
+            .returning(self.model)
+            .where(self.model.user_id == pk, self.model.company_id == company_pk)
+            .values(
+                **data.model_dump(exclude_none=partial),
+            ),
+        )
+        await self.session.commit()
+        return updated_employee.unique().scalar_one_or_none()
 
     async def create(self, in_model: EmployeeIn) -> Employee:
         new_employee = self.model(**in_model.model_dump())  # type: ignore[call-arg]
