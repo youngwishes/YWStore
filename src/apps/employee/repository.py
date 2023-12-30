@@ -52,14 +52,13 @@ class EmployeeRepository(IRepository):
         pk: int,
         company_pk: int,
         data: EmployeeIn | EmployeeOptional,
-        partial: bool = False,
     ) -> Employee:
         updated_employee = await self.session.execute(
             update(self.model)
             .returning(self.model)
             .where(self.model.user_id == pk, self.model.company_id == company_pk)
             .values(
-                **data.model_dump(exclude_none=partial),
+                **data.model_dump(exclude_none=True),
             ),
         )
         await self.session.commit()
