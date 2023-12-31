@@ -1,10 +1,10 @@
 from __future__ import annotations
 from datetime import datetime
 
+from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
 from sqlalchemy import String, Integer, DateTime, Boolean, ForeignKey, func
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from fastapi_users.db import SQLAlchemyBaseUserTable
 
 from src.core.sql.database import Base
 from src.core.mixins import JSONRepresentationMixin
