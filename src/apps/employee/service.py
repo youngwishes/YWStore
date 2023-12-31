@@ -29,6 +29,7 @@ class EmployeeService(IService):
             pk=pk,
             company_pk=company_pk,
             data=data,
+            partial=partial,
         )
 
     async def delete(self):

@@ -109,7 +109,7 @@ async def test_delete_employee_superuser(
     url = app.url_path_for(
         "delete_employee",
         company_pk=create_employee.company_id,
-        employee_pk=create_employee.user_id,
+        user_pk=create_employee.user_id,
     )
     response = await superuser_client.delete(url)
     assert response.status_code == status.HTTP_204_NO_CONTENT
@@ -140,7 +140,7 @@ async def test_delete_employee_authorized(
     url = app.url_path_for(
         "delete_employee",
         company_pk=create_employee.company_id,
-        employee_pk=create_employee.user_id,
+        user_pk=create_employee.user_id,
     )
     response = await authorized_client.delete(url)
     assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -170,7 +170,7 @@ async def test_delete_employee_unauthorized(
     url = app.url_path_for(
         "delete_employee",
         company_pk=create_employee.company_id,
-        employee_pk=create_employee.user_id,
+        user_pk=create_employee.user_id,
     )
     response = await async_client.delete(url)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -193,7 +193,7 @@ async def test_update_employee_by_authorized(
     url = app.url_path_for(
         "update_employee_partially",
         company_pk=create_employee.company_id,
-        employee_pk=create_employee.user_id,
+        user_pk=create_employee.user_id,
     )
     to_update_employee = copy.copy(create_employee)
     to_update_employee.phone_number = "79999999999"
@@ -217,7 +217,7 @@ async def test_partial_update_employee_by_unauthorized(
     url = app.url_path_for(
         "update_employee_partially",
         company_pk=create_employee.company_id,
-        employee_pk=create_employee.user_id,
+        user_pk=create_employee.user_id,
     )
     to_update_employee = copy.copy(create_employee)
     to_update_employee.phone_number = "79999999999"
