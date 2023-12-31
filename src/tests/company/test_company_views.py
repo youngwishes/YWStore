@@ -393,15 +393,16 @@ async def test_hide_company_superuser(
 
 @pytest.mark.anyio
 async def test_partially_update_company_by_admin_in_another_company(
-    any_employee_client: AsyncClient,
+    admin_employee_client: AsyncClient,
     session: AsyncSession,
     random_company: Company,
     update_partial_company_data: dict,
     create_test_user: User,
 ):
     """Тест проверяет частичное обновление компании админом в которой он не является сотрудником."""
+    assert CompanyRoles.ADMIN == create_test_user.roles[0].name
     url = app.url_path_for("update_company_partially", pk=random_company.id)
-    response = await any_employee_client.patch(url, json=update_partial_company_data)
+    response = await admin_employee_client.patch(url, json=update_partial_company_data)
     obj = await session.execute(select(Company).where(Company.id == random_company.id))
     assert response.status_code == status.HTTP_403_FORBIDDEN
     assert not await check_object_data(
@@ -412,15 +413,16 @@ async def test_partially_update_company_by_admin_in_another_company(
 
 @pytest.mark.anyio
 async def test_update_company_by_admin_in_another_company(
-    any_employee_client: AsyncClient,
+    admin_employee_client: AsyncClient,
     session: AsyncSession,
     random_company: Company,
     update_company_data: dict,
     create_test_user: User,
 ):
     """Тест проверяет обновление компании админом в которой он не является сотрудником."""
+    assert CompanyRoles.ADMIN == create_test_user.roles[0].name
     url = app.url_path_for("update_company", pk=random_company.id)
-    response = await any_employee_client.put(url, json=update_company_data)
+    response = await admin_employee_client.put(url, json=update_company_data)
     obj = await session.execute(select(Company).where(Company.id == random_company.id))
     assert response.status_code == status.HTTP_403_FORBIDDEN
     assert not await check_object_data(

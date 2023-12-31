@@ -16,13 +16,13 @@ class PermissionChecker:
         session: AsyncSession,
         allowed_roles: Sequence[str],
         validators: Sequence[Callable] = None,
-        object_pk: int = None,
+        objects_pk: dict | None = None,
         **kwargs,
     ) -> None:
         self.allowed_roles = allowed_roles
         self.session = session
         self.validators = validators
-        self.object_pk = object_pk
+        self.objects_pk = objects_pk
         self.user = user
         self.kwargs = kwargs
 
@@ -44,7 +44,7 @@ class PermissionChecker:
         for validator in self.validators:
             await validator(
                 user=self.user,
-                object_pk=self.object_pk,
+                objects_pk=self.objects_pk,
                 session=self.session,
                 **self.kwargs,
             )

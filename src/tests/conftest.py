@@ -279,3 +279,49 @@ async def any_employee_client(
     access_token = response.json().get("access_token")
     async_client.headers = {"Authorization": f"Bearer {access_token}"}
     yield async_client
+
+
+@pytest.fixture
+async def user_admin(
+    create_test_user: User,
+    session: AsyncSession,
+    create_company_roles,
+) -> User:
+    admin_role = await session.execute(
+        select(Role).where(Role.name == CompanyRoles.ADMIN),
+    )
+    create_test_user.roles.append(admin_role.unique().scalar_one_or_none())
+    return create_test_user
+
+
+@pytest.fixture
+async def employee_admin(
+    user_admin: User,
+    init_employee_data: dict,
+    session: AsyncSession,
+    create_test_company: Company,
+) -> Employee:
+    init_employee_data["user_id"] = user_admin.id
+    init_employee_data["company_id"] = create_test_company.id
+    employee = Employee(**init_employee_data)  # type: ignore[call-args]
+    session.add(employee)
+    await session.commit()
+    await session.refresh(employee)
+    return employee
+
+
+@pytest.fixture
+async def admin_employee_client(
+    async_client: AsyncClient,
+    employee_admin: Employee,
+    get_test_user_data: dict,
+):
+    url = app.url_path_for("auth:jwt.login")
+    credentials = {
+        "username": get_test_user_data.get("email"),
+        "password": get_test_user_data.get("password"),
+    }
+    response = await async_client.post(url, data=credentials)
+    access_token = response.json().get("access_token")
+    async_client.headers = {"Authorization": f"Bearer {access_token}"}
+    yield async_client
