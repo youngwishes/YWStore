@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import random
 from typing import TYPE_CHECKING, Sequence
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.apps.employee.models import Employee
@@ -61,6 +63,16 @@ async def create_employees_many(
         await session.refresh(employee)
         employees.append(employee)
     return employees
+
+
+@pytest.fixture
+async def random_employee(
+    create_employees_many: Sequence[Employee],
+    session: AsyncSession,
+):
+    result = await session.execute(select(Employee))
+    companies = result.unique().scalars().all()
+    return companies[random.randint(0, len(companies) - 1)]
 
 
 @pytest.fixture

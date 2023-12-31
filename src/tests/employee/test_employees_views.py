@@ -186,22 +186,23 @@ async def test_delete_employee_unauthorized(
 async def test_partial_update_employee_by_authorized(
     superuser_client: AsyncClient,
     session: AsyncSession,
-    create_employees_many: Sequence[Employee],
+    create_employee: Employee,
+    random_employee: Employee,
 ):
     """Тест проверяет обновление данных сотрудника супер-юзером"""
     url = app.url_path_for(
         "update_employee_partially",
-        company_pk=create_employees_many[0].company_id,
-        user_pk=create_employees_many[0].user_id,
+        company_pk=create_employee.company_id,
+        user_pk=create_employee.user_id,
     )
     response = await superuser_client.patch(
         url,
-        json=EmployeeIn(**create_employees_many[1].to_json()).model_dump(),
+        json=EmployeeIn(**random_employee.to_json()).model_dump(),
     )
     result = await session.execute(
         select(Employee).where(
-            Employee.user_id == create_employees_many[1].user_id,
-            Employee.telegram == create_employees_many[1].telegram,
+            Employee.user_id == random_employee.user_id,
+            Employee.telegram == random_employee.telegram,
         ),
     )
     after_update_employee = result.unique().scalar_one_or_none()
@@ -209,7 +210,7 @@ async def test_partial_update_employee_by_authorized(
     assert response.status_code == status.HTTP_200_OK
     assert await check_object_data(
         after_update_employee,
-        create_employees_many[1].to_json(),
+        random_employee.to_json(),
     )
 
 
@@ -217,22 +218,23 @@ async def test_partial_update_employee_by_authorized(
 async def test_partial_update_employee_by_unauthorized(
     async_client: AsyncClient,
     session: AsyncSession,
-    create_employees_many: Sequence[Employee],
+    create_employee: Employee,
+    random_employee: Employee,
 ):
     """Тест проверяет частичное обновление данных сотрудника не супер-юзером"""
     url = app.url_path_for(
         "update_employee_partially",
-        company_pk=create_employees_many[0].company_id,
-        user_pk=create_employees_many[0].user_id,
+        company_pk=create_employee.company_id,
+        user_pk=create_employee.user_id,
     )
     response = await async_client.patch(
         url,
-        json=EmployeeOptional(**create_employees_many[1].to_json()).model_dump(),
+        json=EmployeeOptional(**random_employee.to_json()).model_dump(),
     )
     result = await session.execute(
         select(Employee).where(
-            Employee.user_id == create_employees_many[0].user_id,
-            Employee.telegram == create_employees_many[0].telegram,
+            Employee.user_id == create_employee.user_id,
+            Employee.telegram == create_employee.telegram,
         ),
     )
     after_update_employee = result.unique().scalar_one_or_none()
@@ -240,5 +242,5 @@ async def test_partial_update_employee_by_unauthorized(
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert await check_object_data(
         after_update_employee,
-        create_employees_many[0].to_json(),
+        create_employee.to_json(),
     )
