@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 import pytest
 from fastapi import status
 from sqlalchemy import select
@@ -112,7 +112,7 @@ async def test_delete_user_by_unauthorized(
     async_client: AsyncClient,
     session: AsyncSession,
 ):
-    "Тест на удаление пользователя от имени неавторизированного пользователя"
+    """Тест на удаление пользователя от имени неавторизированного пользователя"""
     url = app.url_path_for("user_delete")
     response = await async_client.delete(url)
 
@@ -125,6 +125,7 @@ async def test_edit_user_by_authorized(
     get_test_user_data: dict,
     session: AsyncSession,
 ):
+    """Тест проверяет редактирование пользователя от имени авторизированного пользователя"""
     url = app.url_path_for("user_edit")
     to_change_email = "example_user_email_test1@example.com"
     get_test_user_data["email"] = to_change_email
@@ -132,7 +133,7 @@ async def test_edit_user_by_authorized(
         select(User).where(User.email == to_change_email),
     )
     assert user_stmt.unique().scalar_one_or_none() is None
-    response = await authorized_client.put(url, json=get_test_user_data)
+    response = await authorized_client.patch(url, json=get_test_user_data)
 
     assert response.status_code == status.HTTP_200_OK
     user_stmt = await session.execute(
@@ -142,7 +143,29 @@ async def test_edit_user_by_authorized(
 
 
 @pytest.mark.anyio
-async def test_edit_user_by_unauthorized(async_client: AsyncClient):
+async def test_edit_user_with_used_email_by_authorized(
+    authorized_client: AsyncClient,
+    get_test_user_data: dict,
+    create_test_users: Sequence[User],
+    session: AsyncSession,
+):
+    """Тест проверяет редактирование пользователя с занятой почтой"""
     url = app.url_path_for("user_edit")
-    response = await async_client.put(url)
+    get_test_user_data["email"] = create_test_users[1].email
+    response = await authorized_client.patch(url, json=get_test_user_data)
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    user_stmt = await session.execute(
+        select(User).where(User.email == get_test_user_data["email"]),
+    )
+    user = user_stmt.unique().scalar_one_or_none()
+    assert user is not None
+    assert user.email != create_test_users[0].email
+
+
+@pytest.mark.anyio
+async def test_edit_user_by_unauthorized(async_client: AsyncClient):
+    """Тест проверяет редактирование пользователя от имени не авторизированного пользователя"""
+    url = app.url_path_for("user_edit")
+    response = await async_client.patch(url)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
