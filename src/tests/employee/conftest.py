@@ -48,9 +48,12 @@ async def create_employees_many(
     init_employee_data: dict,
 ) -> Sequence[Employee]:
     employees = []
-    for user in create_test_users:
+    for i, user in enumerate(create_test_users):
         init_employee_data["user_id"] = user.id
         init_employee_data["is_active"] = user.is_active
+        init_employee_data["vk"] = f"{i}"
+        init_employee_data["telegram"] = f"{i}"
+        init_employee_data["extra_data"] = f"{i}"
         employee = Employee(**EmployeeIn(**init_employee_data).model_dump())  # type: ignore[call-arg]
 
         session.add(employee)

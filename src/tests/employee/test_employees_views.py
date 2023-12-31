@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 from typing import TYPE_CHECKING, Sequence
 
 import pytest
@@ -12,7 +11,7 @@ from src.apps.company.models import Company
 from src.apps.employee.models import Employee
 from src.apps.employee.schemas import EmployeeIn, EmployeeOptional
 from src.main import app
-from src.tests.helpers import get_object, check_object_data
+from src.tests.helpers import check_object_data
 
 if TYPE_CHECKING:
     from httpx import AsyncClient
@@ -184,48 +183,62 @@ async def test_delete_employee_unauthorized(
 
 
 @pytest.mark.anyio
-async def test_update_employee_by_authorized(
+async def test_partial_update_employee_by_authorized(
     superuser_client: AsyncClient,
     session: AsyncSession,
-    create_employee: Employee,
+    create_employees_many: Sequence[Employee],
 ):
     """Тест проверяет обновление данных сотрудника супер-юзером"""
     url = app.url_path_for(
         "update_employee_partially",
-        company_pk=create_employee.company_id,
-        user_pk=create_employee.user_id,
+        company_pk=create_employees_many[0].company_id,
+        user_pk=create_employees_many[0].user_id,
     )
-    to_update_employee = copy.copy(create_employee)
-    to_update_employee.phone_number = "79999999999"
-    to_update_employee.vk = "https://vk.com/test123"
     response = await superuser_client.patch(
         url,
-        json=EmployeeIn(**to_update_employee.to_json()).model_dump(),
+        json=EmployeeIn(**create_employees_many[1].to_json()).model_dump(),
     )
-    after_update_employee = await get_object(Employee, session)
+    result = await session.execute(
+        select(Employee).where(
+            Employee.user_id == create_employees_many[1].user_id,
+            Employee.telegram == create_employees_many[1].telegram,
+        ),
+    )
+    after_update_employee = result.unique().scalar_one_or_none()
+    await session.refresh(after_update_employee)
     assert response.status_code == status.HTTP_200_OK
-    assert await check_object_data(after_update_employee, to_update_employee.to_json())
+    assert await check_object_data(
+        after_update_employee,
+        create_employees_many[1].to_json(),
+    )
 
 
 @pytest.mark.anyio
 async def test_partial_update_employee_by_unauthorized(
     async_client: AsyncClient,
     session: AsyncSession,
-    create_employee: Employee,
+    create_employees_many: Sequence[Employee],
 ):
     """Тест проверяет частичное обновление данных сотрудника не супер-юзером"""
     url = app.url_path_for(
         "update_employee_partially",
-        company_pk=create_employee.company_id,
-        user_pk=create_employee.user_id,
+        company_pk=create_employees_many[0].company_id,
+        user_pk=create_employees_many[0].user_id,
     )
-    to_update_employee = copy.copy(create_employee)
-    to_update_employee.phone_number = "79999999999"
-    to_update_employee.vk = "https://vk.com/test123"
     response = await async_client.patch(
         url,
-        json=EmployeeOptional(**to_update_employee.to_json()).model_dump(),
+        json=EmployeeOptional(**create_employees_many[1].to_json()).model_dump(),
     )
-    after_update_employee = await get_object(Employee, session)
+    result = await session.execute(
+        select(Employee).where(
+            Employee.user_id == create_employees_many[0].user_id,
+            Employee.telegram == create_employees_many[0].telegram,
+        ),
+    )
+    after_update_employee = result.unique().scalar_one_or_none()
+    await session.refresh(after_update_employee)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert await check_object_data(after_update_employee, create_employee.to_json())
+    assert await check_object_data(
+        after_update_employee,
+        create_employees_many[0].to_json(),
+    )

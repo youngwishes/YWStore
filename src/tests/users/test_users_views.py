@@ -125,6 +125,7 @@ async def test_edit_user_by_authorized(
     get_test_user_data: dict,
     session: AsyncSession,
 ):
+    """Тест на обновление данных пользователя от имени авторизованного пользователя"""
     url = app.url_path_for("user_edit")
     to_change_email = "example_user_email_test1@example.com"
     get_test_user_data["email"] = to_change_email
@@ -143,6 +144,7 @@ async def test_edit_user_by_authorized(
 
 @pytest.mark.anyio
 async def test_edit_user_by_unauthorized(async_client: AsyncClient):
+    """Тест на обновление данных пользователя от имени не авторизованного пользователя"""
     url = app.url_path_for("user_edit")
     response = await async_client.put(url)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
