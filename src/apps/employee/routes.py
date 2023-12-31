@@ -12,7 +12,6 @@ from src.apps.employee.schemas import (
     EmployeeIn,
     EmployeeOut,
     EmployeeOptional,
-    BaseEmployee,
 )
 from src.core.exceptions import NotFoundError, UniqueConstraintError
 from src.core.http_response_schemas import (
@@ -123,11 +122,11 @@ async def delete_employee(
     description="Частичное обновление данных сотрудника.",
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_200_OK: {"model": BaseEmployee},
+        status.HTTP_200_OK: {"model": EmployeeOut},
         status.HTTP_404_NOT_FOUND: {"model": NotFound},
         status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
     },
-    response_model=BaseEmployee,
+    response_model=EmployeeOut,
 )
 async def update_employee_partially(
     user_pk: int,
@@ -135,7 +134,7 @@ async def update_employee_partially(
     employee: EmployeeOptional,
     service: EmployeeService = Depends(employee_service),
     _: User = Depends(superuser),
-) -> BaseEmployee:
+) -> EmployeeOut:
     if await service.check_if_exists(company_pk=company_pk, user_pk=user_pk) is None:
         raise NotFoundError(
             detail="Компания с идентификатором %s или сотрудник с идентификатором <%s> не были найдены."
