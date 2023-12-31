@@ -1,6 +1,10 @@
 from __future__ import annotations
+
+import random
 from typing import TYPE_CHECKING, Sequence
+
 import pytest
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.apps.employee.models import Employee
@@ -46,9 +50,12 @@ async def create_employees_many(
     init_employee_data: dict,
 ) -> Sequence[Employee]:
     employees = []
-    for user in create_test_users:
+    for i, user in enumerate(create_test_users):
         init_employee_data["user_id"] = user.id
         init_employee_data["is_active"] = user.is_active
+        init_employee_data["vk"] = f"{i}"
+        init_employee_data["telegram"] = f"{i}"
+        init_employee_data["extra_data"] = f"{i}"
         employee = Employee(**EmployeeIn(**init_employee_data).model_dump())  # type: ignore[call-arg]
 
         session.add(employee)
@@ -56,6 +63,16 @@ async def create_employees_many(
         await session.refresh(employee)
         employees.append(employee)
     return employees
+
+
+@pytest.fixture
+async def random_employee(
+    create_employees_many: Sequence[Employee],
+    session: AsyncSession,
+):
+    result = await session.execute(select(Employee))
+    companies = result.unique().scalars().all()
+    return companies[random.randint(0, len(companies) - 1)]
 
 
 @pytest.fixture
