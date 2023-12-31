@@ -50,11 +50,16 @@ async def create_test_company_many(session: AsyncSession) -> int:
 
 
 @pytest.fixture
-async def random_company(create_test_company_many: int, session: AsyncSession):
+async def random_company(
+    create_test_company_many: int,
+    session: AsyncSession,
+    create_test_company: Company,
+):
     result = await session.execute(
         select(Company).where(
             Company.is_hidden.is_(False),
             Company.is_verified.is_(True),
+            Company.id != create_test_company.id,
         ),
     )
     companies = result.unique().scalars().all()

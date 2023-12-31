@@ -33,10 +33,12 @@ async def get_user_from_kwargs(kwargs: dict) -> User | None:
             return value
 
 
-async def get_object_pk(kwargs: dict) -> int | None:
+async def get_objects_pk(kwargs: dict) -> dict | None:
+    primary_keys = {}
     for key, value in kwargs.items():
         if key.startswith("pk") or key.endswith("pk") or key.endswith("id"):
-            return value
+            primary_keys[key] = value
+    return primary_keys
 
 
 def permissions(
@@ -52,13 +54,13 @@ def permissions(
         @functools.wraps(func)
         async def wrapped(*args, **kwargs) -> Any:
             user = await get_user_from_kwargs(kwargs)
-            object_pk = await get_object_pk(kwargs)
+            objects_pk = await get_objects_pk(kwargs)
             checker = PermissionChecker(
                 user=user,
                 session=session,
                 allowed_roles=allowed_roles,
                 validators=validators,
-                object_pk=object_pk,
+                objects_pk=objects_pk,
             )
             await checker.execute()
             result = await func(*args, **kwargs)

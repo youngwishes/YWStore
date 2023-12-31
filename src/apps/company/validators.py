@@ -11,13 +11,13 @@ if TYPE_CHECKING:
 
 
 @allow_superuser
-async def is_company_admin(*, user: User, object_pk: int, **kwargs) -> None:
+async def is_company_admin(*, user: User, objects_pk: dict, **kwargs) -> None:
     if not is_member(user, CompanyRoles.ADMIN):
         raise AdminRequiredError(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Необходимо обладать правами администратора.",
         )
-    if not user.employee or user.employee.company_id != object_pk:
+    if not user.employee or user.employee.company_id != objects_pk.get("pk"):
         raise IsOwnerError(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Вы не имеете доступа к данной компании.",
