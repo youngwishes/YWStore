@@ -52,13 +52,14 @@ async def user_delete(
     await manager.delete(await manager.get(id=user.id))
 
 
-@users_router.put(
+@users_router.patch(
     "/",
-    description="Обновить учетные данные пользователя",
+    description="Частично обновить учетные данные пользователя",
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {"model": UserUpdate},
         status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
+        status.HTTP_400_BAD_REQUEST: {"model": UniqueConstraint},
     },
     response_model=UserRead,
 )
@@ -67,11 +68,18 @@ async def user_edit(
     manager: UserManager = Depends(get_user_manager),
     user: User = Depends(current_user),
 ) -> UserRead:
-    return await manager.update(
-        user_update=user_to_update,
-        user=await manager.get(user.id),
-        safe=True,
-    )
+    try:
+        return await manager.update(
+            user_update=user_to_update,
+            user=await manager.get(user.id),
+            safe=True,
+        )
+    except UserAlreadyExists:
+        raise UniqueConstraintError(
+            detail="Пользователь с почтой <%s>  уже зарегистрирован в системе."
+            % user.email,
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 @users_router.get(
