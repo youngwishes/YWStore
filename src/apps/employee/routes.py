@@ -145,5 +145,6 @@ async def update_employee_partially(
         pk=user_pk,
         company_pk=company_pk,
         data=employee,
+        partial=True,
     )
     return updated_employee
