@@ -125,6 +125,7 @@ async def delete_employee(
         status.HTTP_200_OK: {"model": EmployeeOut},
         status.HTTP_404_NOT_FOUND: {"model": NotFound},
         status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
+        status.HTTP_403_FORBIDDEN: {"model": NotAllowed},
     },
     response_model=EmployeeOut,
 )

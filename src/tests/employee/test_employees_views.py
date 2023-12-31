@@ -183,7 +183,7 @@ async def test_delete_employee_unauthorized(
 
 
 @pytest.mark.anyio
-async def test_partial_update_employee_by_authorized(
+async def test_partial_update_employee_by_superuser(
     superuser_client: AsyncClient,
     session: AsyncSession,
     create_employee: Employee,
@@ -221,7 +221,7 @@ async def test_partial_update_employee_by_unauthorized(
     create_employee: Employee,
     random_employee: Employee,
 ):
-    """Тест проверяет частичное обновление данных сотрудника не супер-юзером"""
+    """Тест проверяет частичное обновление данных сотрудника не авторизированным пользователем"""
     url = app.url_path_for(
         "update_employee_partially",
         company_pk=create_employee.company_id,
@@ -240,6 +240,38 @@ async def test_partial_update_employee_by_unauthorized(
     after_update_employee = result.unique().scalar_one_or_none()
     await session.refresh(after_update_employee)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert await check_object_data(
+        after_update_employee,
+        create_employee.to_json(),
+    )
+
+
+@pytest.mark.anyio
+async def test_partial_update_employee_by_authorized(
+    authorized_client: AsyncClient,
+    session: AsyncSession,
+    create_employee: Employee,
+    random_employee: Employee,
+):
+    """Тест проверяет частичное обновление данных сотрудника авторизированынм пользователем"""
+    url = app.url_path_for(
+        "update_employee_partially",
+        company_pk=create_employee.company_id,
+        user_pk=create_employee.user_id,
+    )
+    response = await authorized_client.patch(
+        url,
+        json=EmployeeOptional(**random_employee.to_json()).model_dump(),
+    )
+    result = await session.execute(
+        select(Employee).where(
+            Employee.user_id == create_employee.user_id,
+            Employee.telegram == create_employee.telegram,
+        ),
+    )
+    after_update_employee = result.unique().scalar_one_or_none()
+    await session.refresh(after_update_employee)
+    assert response.status_code == status.HTTP_403_FORBIDDEN
     assert await check_object_data(
         after_update_employee,
         create_employee.to_json(),
