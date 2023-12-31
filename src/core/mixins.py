@@ -1,3 +1,7 @@
 class JSONRepresentationMixin:
     def to_json(self) -> dict:
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        return {
+            column: value
+            for column, value in self.__dict__.items()
+            if not column.startswith("_")
+        }

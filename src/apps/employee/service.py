@@ -3,7 +3,7 @@ from src.core.interfaces import IService
 from typing import TYPE_CHECKING, Sequence
 
 if TYPE_CHECKING:
-    from src.apps.employee.schemas import EmployeeIn
+    from src.apps.employee.schemas import EmployeeIn, EmployeeOptional
     from src.apps.employee.repository import EmployeeRepository
     from src.apps.employee.models import Employee
 
@@ -18,8 +18,19 @@ class EmployeeService(IService):
     async def create(self, in_model: EmployeeIn) -> Employee:
         return await self._repo.create(in_model=in_model)
 
-    async def update(self, pk, data, partial):
-        return await self._repo.update(pk=pk, data=data, partial=partial)
+    async def update(
+        self,
+        pk: int,
+        company_pk: int,
+        data: EmployeeIn | EmployeeOptional,
+        partial: bool = False,
+    ) -> Employee:
+        return await self._repo.update(
+            pk=pk,
+            company_pk=company_pk,
+            data=data,
+            partial=partial,
+        )
 
     async def delete(self):
         return await self._repo.delete()

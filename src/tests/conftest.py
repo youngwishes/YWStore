@@ -4,26 +4,24 @@ from copy import copy
 from typing import AsyncGenerator, TYPE_CHECKING, Sequence
 
 import pytest
-
+from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import text, select
 from sqlalchemy.pool import NullPool
+from sqlalchemy.sql import text, select
 
 from src.apps.company.enums import CompanyType
 from src.apps.company.models import Company
 from src.apps.employee.models import Employee
 from src.apps.roles.enums import CompanyRoles
-from src.main import app
-from src.tests import defaults
 from src.core.config import get_settings
 from src.core.sql.database import Base, get_session
+from src.core.users.manager import UserManager
 from src.core.users.models import User, Role
 from src.core.users.schemas import UserCreate
-
-from httpx import AsyncClient
-from src.core.users.manager import UserManager
-from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+from src.main import app
+from src.tests import defaults
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncEngine
@@ -231,7 +229,7 @@ async def create_test_company(
 
 
 @pytest.fixture
-async def create_company_roles(session: AsyncSession) -> list[Role]:
+async def create_company_roles(session: AsyncSession) -> None:
     for role_name in CompanyRoles.list():
         role = Role(name=role_name)  # type: ignore[call-arg]
         session.add(role)

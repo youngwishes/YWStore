@@ -1,13 +1,17 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Sequence
+
 import pytest
 from fastapi import status
-from sqlalchemy.sql import select, func
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql import select, func
 
-from src.main import app
-from src.apps.employee.models import Employee
 from src.apps.company.models import Company
+from src.apps.employee.models import Employee
+from src.apps.employee.schemas import EmployeeIn, EmployeeOptional
+from src.main import app
+from src.tests.helpers import check_object_data
 
 if TYPE_CHECKING:
     from httpx import AsyncClient
@@ -95,7 +99,6 @@ async def test_delete_employee_superuser(
     superuser_client: AsyncClient,
 ):
     """Тест проверяет мягкое удаление пользователя из компании от имени супер пользователя"""
-
     employee_request = await session.execute(
         select(Employee).where(Employee.user_id == create_employee.user_id),
     )
@@ -105,7 +108,7 @@ async def test_delete_employee_superuser(
     url = app.url_path_for(
         "delete_employee",
         company_pk=create_employee.company_id,
-        employee_pk=create_employee.user_id,
+        user_pk=create_employee.user_id,
     )
     response = await superuser_client.delete(url)
     assert response.status_code == status.HTTP_204_NO_CONTENT
@@ -136,7 +139,7 @@ async def test_delete_employee_authorized(
     url = app.url_path_for(
         "delete_employee",
         company_pk=create_employee.company_id,
-        employee_pk=create_employee.user_id,
+        user_pk=create_employee.user_id,
     )
     response = await authorized_client.delete(url)
     assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -166,7 +169,7 @@ async def test_delete_employee_unauthorized(
     url = app.url_path_for(
         "delete_employee",
         company_pk=create_employee.company_id,
-        employee_pk=create_employee.user_id,
+        user_pk=create_employee.user_id,
     )
     response = await async_client.delete(url)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -177,3 +180,99 @@ async def test_delete_employee_unauthorized(
     )
     employee_after = employee_request.unique().scalar_one_or_none()
     assert employee_after.is_active is True
+
+
+@pytest.mark.anyio
+async def test_partial_update_employee_by_superuser(
+    superuser_client: AsyncClient,
+    session: AsyncSession,
+    create_employee: Employee,
+    random_employee: Employee,
+):
+    """Тест проверяет обновление данных сотрудника супер-юзером"""
+    url = app.url_path_for(
+        "update_employee_partially",
+        company_pk=create_employee.company_id,
+        user_pk=create_employee.user_id,
+    )
+    response = await superuser_client.patch(
+        url,
+        json=EmployeeIn(**random_employee.to_json()).model_dump(),
+    )
+    result = await session.execute(
+        select(Employee).where(
+            Employee.user_id == random_employee.user_id,
+            Employee.telegram == random_employee.telegram,
+        ),
+    )
+    after_update_employee = result.unique().scalar_one_or_none()
+    await session.refresh(after_update_employee)
+    assert response.status_code == status.HTTP_200_OK
+    assert await check_object_data(
+        after_update_employee,
+        random_employee.to_json(),
+    )
+
+
+@pytest.mark.anyio
+async def test_partial_update_employee_by_unauthorized(
+    async_client: AsyncClient,
+    session: AsyncSession,
+    create_employee: Employee,
+    random_employee: Employee,
+):
+    """Тест проверяет частичное обновление данных сотрудника не авторизированным пользователем"""
+    url = app.url_path_for(
+        "update_employee_partially",
+        company_pk=create_employee.company_id,
+        user_pk=create_employee.user_id,
+    )
+    response = await async_client.patch(
+        url,
+        json=EmployeeOptional(**random_employee.to_json()).model_dump(),
+    )
+    result = await session.execute(
+        select(Employee).where(
+            Employee.user_id == create_employee.user_id,
+            Employee.telegram == create_employee.telegram,
+        ),
+    )
+    after_update_employee = result.unique().scalar_one_or_none()
+    await session.refresh(after_update_employee)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert await check_object_data(
+        after_update_employee,
+        create_employee.to_json(),
+    )
+
+
+@pytest.mark.anyio
+async def test_partial_update_employee_by_authorized(
+    authorized_client: AsyncClient,
+    session: AsyncSession,
+    create_employee: Employee,
+    random_employee: Employee,
+):
+    """Тест проверяет частичное обновление данных сотрудника авторизированынм пользователем"""
+    url = app.url_path_for(
+        "update_employee_partially",
+        company_pk=create_employee.company_id,
+        user_pk=create_employee.user_id,
+    )
+    response = await authorized_client.patch(
+        url,
+        json=EmployeeOptional(**random_employee.to_json()).model_dump(),
+    )
+    result = await session.execute(
+        select(Employee).where(
+            Employee.user_id == create_employee.user_id,
+            Employee.telegram == create_employee.telegram,
+        ),
+    )
+    after_update_employee = result.unique().scalar_one_or_none()
+    await session.refresh(after_update_employee)
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert await check_object_data(
+        after_update_employee,
+        create_employee.to_json(),
+    )
