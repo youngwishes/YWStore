@@ -3,7 +3,7 @@ import functools
 from typing import Sequence, Callable, TYPE_CHECKING, Any
 from fastapi import Depends
 from src.core.users.models import User
-from src.permissions.service import PermissionChecker
+from src.permissions.checker import PermissionChecker
 from src.core.users.depends import get_session
 from src.core.utils import import_schema
 

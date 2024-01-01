@@ -20,6 +20,12 @@ class RoleRepository(IRepository):
         roles = await self.session.execute(select(self.model))
         return roles.unique().scalars().all()
 
+    async def get_by_pk(self, role_pk: int) -> Role:
+        role = await self.session.execute(
+            select(self.model).where(self.model.id == role_pk),
+        )
+        return role.unique().scalar_one_or_none()
+
     async def get_by_name(self, name: str) -> Role:
         role = await self.session.execute(
             select(self.model).where(self.model.name == name),
@@ -30,18 +36,18 @@ class RoleRepository(IRepository):
         await self.session.execute(delete(self.model))
         await self.session.commit()
 
-    async def delete_role(self, name: str) -> bool:
+    async def delete_role(self, role_pk: int) -> bool:
         result = await self.session.execute(
-            delete(self.model).where(self.model.name == name),
+            delete(self.model).where(self.model.id == role_pk),
         )
         await self.session.commit()
         return bool(result.rowcount)
 
-    async def update(self, old_name: str, new_name: str, partial: bool = False) -> Role:
+    async def update(self, role_pk: int, new_name: str, partial: bool = False) -> Role:
         updated_role = await self.session.execute(
             update(self.model)
             .returning(self.model)
-            .where(self.model.name == old_name)
+            .where(self.model.id == role_pk)
             .values(name=new_name),
         )
         await self.session.commit()
@@ -55,10 +61,9 @@ class RoleRepository(IRepository):
         return instance
 
     async def add_roles_to_user(self, user: User, roles_set: set[str]) -> User:
-        user_roles_name_set = {role.name for role in user.roles}
         roles_stmt = await self.session.execute(
             select(self.model).where(
-                self.model.name.in_(roles_set.difference(user_roles_name_set)),
+                self.model.name.in_(roles_set.difference(user.roles_set)),
             ),
         )
         user.roles.extend(roles_stmt.unique().scalars().all())

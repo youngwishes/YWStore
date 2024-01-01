@@ -1,19 +1,13 @@
 from __future__ import annotations
-
-from typing import TYPE_CHECKING, Sequence
-
+from typing import Sequence, TYPE_CHECKING
 from fastapi import APIRouter, status, Depends
-from fastapi_users.exceptions import UserNotExists
-
-from src.apps.company.depends import company_service
-from src.apps.employee.depends import employee_service
+from src.apps.employee.depends import employee_controller
 from src.apps.employee.models import Employee
 from src.apps.employee.schemas import (
     EmployeeIn,
     EmployeeOut,
     EmployeeOptional,
 )
-from src.core.exceptions import NotFoundError, UniqueConstraintError
 from src.core.http_response_schemas import (
     NotFound,
     NotAllowed,
@@ -21,13 +15,11 @@ from src.core.http_response_schemas import (
     UniqueConstraint,
 )
 from src.core.users.auth import superuser
-from src.core.users.depends import get_user_manager
 from src.core.users.models import User
 
 if TYPE_CHECKING:
-    from src.apps.company.service import CompanyService
-    from src.core.users.manager import UserManager
-    from src.apps.employee.service import EmployeeService
+    from src.apps.employee.controller import EmployeeController
+
 
 employee_router = APIRouter()
 
@@ -46,33 +38,9 @@ employee_router = APIRouter()
 )
 async def add_employee(
     employee: EmployeeIn,
-    comp_service: CompanyService = Depends(company_service),
-    emp_service: EmployeeService = Depends(employee_service),
-    user_manager: UserManager = Depends(get_user_manager),
+    controller: EmployeeController = Depends(employee_controller),
 ) -> EmployeeOut:
-    if not await comp_service.get_by_pk(pk=employee.company_id):
-        raise NotFoundError(
-            detail="Компания с идентификатором %s не была найдена в системе"
-            % employee.company_id,
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
-    try:
-        await user_manager.get(id=employee.user_id)
-    except UserNotExists:
-        raise NotFoundError(
-            detail="Пользователь с идентификатором %s не был найден в системе"
-            % employee.user_id,
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
-    if await emp_service.check_if_exists(
-        company_pk=employee.company_id,
-        user_pk=employee.user_id,
-    ):
-        raise UniqueConstraintError(
-            detail="Пользователь уже состоит в компании",
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
-    return await emp_service.create(in_model=employee)
+    return await controller.create(in_model=employee)
 
 
 @employee_router.get(
@@ -88,9 +56,9 @@ async def add_employee(
 )
 async def get_employees(
     company_pk: int,
-    service: EmployeeService = Depends(employee_service),
+    controller: EmployeeController = Depends(employee_controller),
 ) -> Sequence[Employee]:
-    return await service.get(pk=company_pk)
+    return await controller.get(company_pk=company_pk)
 
 
 @employee_router.delete(
@@ -105,16 +73,10 @@ async def get_employees(
 async def delete_employee(
     user_pk: int,
     company_pk: int,
-    service: EmployeeService = Depends(employee_service),
+    controller: EmployeeController = Depends(employee_controller),
     _: User = Depends(superuser),
 ):
-    if await service.check_if_exists(company_pk=company_pk, user_pk=user_pk) is None:
-        raise NotFoundError(
-            detail="Компания с идентификатором %s или сотрудник с идентификатором <%s> не были найдены."
-            % (company_pk, user_pk),
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
-    await service.delete_from_company_by_pk(company_pk=company_pk, pk=user_pk)
+    await controller.delete_from_company_by_pk(company_pk=company_pk, user_pk=user_pk)
 
 
 @employee_router.patch(
@@ -133,19 +95,12 @@ async def update_employee_partially(
     user_pk: int,
     company_pk: int,
     employee: EmployeeOptional,
-    service: EmployeeService = Depends(employee_service),
+    controller: EmployeeController = Depends(employee_controller),
     _: User = Depends(superuser),
 ) -> EmployeeOut:
-    if await service.check_if_exists(company_pk=company_pk, user_pk=user_pk) is None:
-        raise NotFoundError(
-            detail="Компания с идентификатором %s или сотрудник с идентификатором <%s> не были найдены."
-            % (company_pk, user_pk),
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
-    updated_employee = await service.update(
-        pk=user_pk,
+    return await controller.update(
+        user_pk=user_pk,
         company_pk=company_pk,
         data=employee,
         partial=True,
     )
-    return updated_employee

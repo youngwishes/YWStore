@@ -26,14 +26,10 @@ class PermissionChecker:
         self.user = user
         self.kwargs = kwargs
 
-    @property
-    def user_roles_set(self) -> set[str]:
-        return {role.name for role in self.user.roles}
-
     def _check_user_roles(self) -> None:
         """Проверка, что у пользователя принадлежит хотя бы одной из ролей в allowed_roles"""
         if self.user and not self.user.is_superuser:
-            if not self.user_roles_set.intersection(self.allowed_roles):
+            if not self.user.roles_set.intersection(self.allowed_roles):
                 raise RoleNotExists(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail=f"Пользователь не является никем из: {self.allowed_roles}",

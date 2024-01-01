@@ -18,10 +18,10 @@ class EmployeeRepository(IRepository):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def get(self, pk: int) -> Sequence[Employee]:
+    async def get(self, company_pk: int) -> Sequence[Employee]:
         employees = await self.session.execute(
             select(self.model)
-            .where(self.model.company_id == pk, self.model.is_active == true())
+            .where(self.model.company_id == company_pk, self.model.is_active == true())
             .options(selectinload(self.model.user)),
         )
         return employees.unique().scalars().all()
@@ -30,15 +30,19 @@ class EmployeeRepository(IRepository):
         await self.session.execute(update(self.model).values(is_active=False))
         await self.session.commit()
 
-    async def delete_from_company_by_pk(self, pk: int, company_pk: int):
+    async def delete_from_company_by_pk(self, user_pk: int, company_pk: int):
         await self.session.execute(
             update(self.model)
-            .where(self.model.company_id == company_pk and self.model.user_id == pk)
+            .where(self.model.company_id == company_pk, self.model.user_id == user_pk)
             .values(is_active=False),
         )
         await self.session.commit()
 
-    async def check_if_exists(self, company_pk: int, user_pk: int) -> Employee | None:
+    async def check_user_already_in_company(
+        self,
+        company_pk: int,
+        user_pk: int,
+    ) -> Employee | None:
         employee = await self.session.execute(
             select(self.model).where(
                 self.model.company_id == company_pk,
@@ -63,7 +67,7 @@ class EmployeeRepository(IRepository):
             ),
         )
         await self.session.commit()
-        return updated_employee.unique().scalar_one_or_none()
+        return updated_employee.unique().scalar_one()
 
     async def create(self, in_model: EmployeeIn) -> Employee:
         new_employee = self.model(**in_model.model_dump())  # type: ignore[call-arg]

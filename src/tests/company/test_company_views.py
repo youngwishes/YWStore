@@ -109,7 +109,7 @@ async def test_update_company(
     create_test_user: User,
 ):
     """Тест проверяет корректное обновление компании юзером с ролью ADMIN"""
-    url = app.url_path_for("update_company", pk=create_test_company.id)
+    url = app.url_path_for("update_company", company_pk=create_test_company.id)
     response = await any_employee_client.put(url, json=update_company_data)
     obj = await get_object(Company, session)
     if await is_member(create_test_user, CompanyRoles.ADMIN):
@@ -130,7 +130,7 @@ async def test_update_company_with_exists_name(
     create_test_user: User,
 ):
     """Тест проверяет запрет на обновление названия компании если такое уже есть в системе"""
-    url = app.url_path_for("update_company", pk=create_test_company.id)
+    url = app.url_path_for("update_company", company_pk=create_test_company.id)
     update_company_data["name"] = random_company.name
     response = await any_employee_client.put(url, json=update_company_data)
     if await is_member(create_test_user, CompanyRoles.ADMIN):
@@ -148,7 +148,7 @@ async def test_update_company_unauthorized(
     company_init_data: dict,
 ):
     """Тест проверяет запрет на обновление компании неавторизованным юзером"""
-    url = app.url_path_for("update_company", pk=create_test_company.id)
+    url = app.url_path_for("update_company", company_pk=create_test_company.id)
     response = await async_client.put(url, json=update_company_data)
     obj = await get_object(Company, session)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -164,7 +164,10 @@ async def test_partially_update_company(
     create_test_user: User,
 ):
     """Тест проверяет частичное обновление компании"""
-    url = app.url_path_for("update_company_partially", pk=create_test_company.id)
+    url = app.url_path_for(
+        "update_company_partially",
+        company_pk=create_test_company.id,
+    )
     response = await any_employee_client.patch(url, json=update_partial_company_data)
     obj = await get_object(Company, session)
     if await is_member(create_test_user, CompanyRoles.ADMIN):
@@ -185,7 +188,10 @@ async def test_partially_update_company_with_exists_name(
     create_test_user: User,
 ):
     """Тест проверяет частичное обновление компании если имя уже существует в системе"""
-    url = app.url_path_for("update_company_partially", pk=create_test_company.id)
+    url = app.url_path_for(
+        "update_company_partially",
+        company_pk=create_test_company.id,
+    )
     update_partial_company_data["name"] = random_company.name
     response = await any_employee_client.patch(url, json=update_partial_company_data)
     if await is_member(create_test_user, CompanyRoles.ADMIN):
@@ -203,7 +209,10 @@ async def test_partially_update_company_unauthorized(
     company_init_data: dict,
 ):
     """Тест проверяет частичное обновление компании от лица не авторизированного юзера"""
-    url = app.url_path_for("update_company_partially", pk=create_test_company.id)
+    url = app.url_path_for(
+        "update_company_partially",
+        company_pk=create_test_company.id,
+    )
     response = await async_client.patch(url, json=update_partial_company_data)
     obj = await get_object(Company, session)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -265,7 +274,7 @@ async def test_company_delete_by_superuser(
     random_company: Company,
 ):
     """Проверка на удаление конкретной компании супер-юзером"""
-    url = app.url_path_for("delete_company", pk=random_company.id)
+    url = app.url_path_for("delete_company", company_pk=random_company.id)
     count_objects_before = await get_objects_count(Company, session)
     assert count_objects_before != 0
     response = await superuser_client.delete(url)
@@ -281,7 +290,7 @@ async def test_company_delete_unauthorized(
     random_company: Company,
 ):
     """Проверка на удаление конкретной компании от лица не авторизированного юзера"""
-    url = app.url_path_for("delete_company", pk=random_company.id)
+    url = app.url_path_for("delete_company", company_pk=random_company.id)
     count_objects_before = await get_objects_count(Company, session)
     assert count_objects_before != 0
     response = await async_client.delete(url)
@@ -297,7 +306,7 @@ async def test_company_delete_by_any_user(
     random_company: Company,
 ):
     """Проверка на удаление конкретной компании от всех возможных ролей юзера"""
-    url = app.url_path_for("delete_company", pk=random_company.id)
+    url = app.url_path_for("delete_company", company_pk=random_company.id)
     count_objects_before = await get_objects_count(Company, session)
     assert count_objects_before != 0
     response = await any_employee_client.delete(url)
@@ -326,7 +335,7 @@ async def test_company_detail(
     random_company: Company,
 ):
     """Тест на детальное представление компании"""
-    url = app.url_path_for("company_detail", pk=random_company.id)
+    url = app.url_path_for("company_detail", company_pk=random_company.id)
     response = await async_client.get(url)
     assert response.status_code == status.HTTP_200_OK
     assert check_object_data(random_company, data=response.json())
@@ -338,7 +347,7 @@ async def test_verify_company_superuser(
     session: AsyncSession,
     random_company: Company,
 ):
-    url = app.url_path_for("verify_company", pk=random_company.id)
+    url = app.url_path_for("verify_company", company_pk=random_company.id)
     assert random_company.is_verified is True
     response = await superuser_client.patch(url, json={"is_verified": False})
     await session.refresh(random_company)
@@ -353,7 +362,7 @@ async def test_verify_company_authorized(
     session: AsyncSession,
     random_company: Company,
 ):
-    url = app.url_path_for("verify_company", pk=random_company.id)
+    url = app.url_path_for("verify_company", company_pk=random_company.id)
     assert random_company.is_verified is True
     response = await any_employee_client.patch(url, json={"is_verified": False})
     await session.refresh(random_company)
@@ -369,7 +378,7 @@ async def test_hide_company_authorized(
 ):
     """Тест на скрытие компании из системы"""
     assert random_company.is_hidden is False
-    url = app.url_path_for("hide_company", pk=random_company.id)
+    url = app.url_path_for("hide_company", company_pk=random_company.id)
     response = await any_employee_client.patch(url, json={"is_hidden": True})
     assert response.status_code == status.HTTP_403_FORBIDDEN
     await session.refresh(random_company)
@@ -384,7 +393,7 @@ async def test_hide_company_superuser(
 ):
     """Тест на скрытие компании из системы суперпользователем"""
     assert random_company.is_hidden is False
-    url = app.url_path_for("hide_company", pk=random_company.id)
+    url = app.url_path_for("hide_company", company_pk=random_company.id)
     response = await superuser_client.patch(url, json={"is_hidden": True})
     assert response.status_code == status.HTTP_200_OK
     await session.refresh(random_company)
@@ -401,7 +410,7 @@ async def test_partially_update_company_by_admin_in_another_company(
 ):
     """Тест проверяет частичное обновление компании админом в которой он не является сотрудником."""
     assert CompanyRoles.ADMIN == create_test_user.roles[0].name
-    url = app.url_path_for("update_company_partially", pk=random_company.id)
+    url = app.url_path_for("update_company_partially", company_pk=random_company.id)
     response = await admin_employee_client.patch(url, json=update_partial_company_data)
     obj = await session.execute(select(Company).where(Company.id == random_company.id))
     assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -421,7 +430,7 @@ async def test_update_company_by_admin_in_another_company(
 ):
     """Тест проверяет обновление компании админом в которой он не является сотрудником."""
     assert CompanyRoles.ADMIN == create_test_user.roles[0].name
-    url = app.url_path_for("update_company", pk=random_company.id)
+    url = app.url_path_for("update_company", company_pk=random_company.id)
     response = await admin_employee_client.put(url, json=update_company_data)
     obj = await session.execute(select(Company).where(Company.id == random_company.id))
     assert response.status_code == status.HTTP_403_FORBIDDEN

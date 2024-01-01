@@ -59,7 +59,7 @@ async def test_role_update(
     session: AsyncSession,
 ):
     """Обновление существующей роли неавторизованным пользователем"""
-    url = app.url_path_for("update_role", old_name=create_role.name)
+    url = app.url_path_for("update_role", role_pk=create_role.id)
     response = await async_client.put(url, json={"new_name": TEST_ROLE_NEW_NAME})
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     instance = await get_object(model=Role, session=session)
@@ -73,7 +73,7 @@ async def test_role_update_authorized(
     session: AsyncSession,
 ):
     """Обновление существующей роли авторизованным пользователем"""
-    url = app.url_path_for("update_role", old_name=create_role.name)
+    url = app.url_path_for("update_role", role_pk=create_role.id)
     response = await authorized_client.put(url, json={"new_name": TEST_ROLE_NEW_NAME})
     assert response.status_code == status.HTTP_403_FORBIDDEN
     instance = await get_object(model=Role, session=session)
@@ -88,7 +88,7 @@ async def test_role_update_superuser(
 ):
     """Обновление существующей роли супер-юзером"""
     assert create_role.name == TEST_ROLE_NAME
-    url = app.url_path_for("update_role", old_name=create_role.name)
+    url = app.url_path_for("update_role", role_pk=create_role.id)
     response = await superuser_client.put(url, json={"new_name": TEST_ROLE_NEW_NAME})
     assert response.status_code == status.HTTP_200_OK
     instance = await get_object(model=Role, session=session)
@@ -96,14 +96,14 @@ async def test_role_update_superuser(
 
 
 @pytest.mark.anyio
-async def test_role_delete(
+async def test_role_delete_unauthorized(
     create_role: Role,
     async_client: AsyncClient,
     session: AsyncSession,
 ):
     """Удаление существующей роли неавторизованным пользователем"""
     roles_count_before = await get_objects_count(model=Role, session=session)
-    url = app.url_path_for("delete_role", role_name=create_role.name)
+    url = app.url_path_for("delete_role", role_pk=create_role.id)
     response = await async_client.delete(url)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     roles_count_after = await get_objects_count(model=Role, session=session)
@@ -118,7 +118,7 @@ async def test_role_delete_authorized(
 ):
     """Удаление существующей роли авторизованным пользователем"""
     roles_count_before = await get_objects_count(model=Role, session=session)
-    url = app.url_path_for("delete_role", role_name=create_role.name)
+    url = app.url_path_for("delete_role", role_pk=create_role.id)
     response = await authorized_client.delete(url)
     assert response.status_code == status.HTTP_403_FORBIDDEN
     roles_count_after = await get_objects_count(model=Role, session=session)
@@ -133,7 +133,7 @@ async def test_role_delete_superuser(
 ):
     """Удаление существующей роли супер-юзером"""
     roles_count_before = await get_objects_count(model=Role, session=session)
-    url = app.url_path_for("delete_role", role_name=create_role.name)
+    url = app.url_path_for("delete_role", role_pk=create_role.id)
     response = await superuser_client.delete(url)
     assert response.status_code == status.HTTP_204_NO_CONTENT
     roles_count_after = await get_objects_count(model=Role, session=session)
