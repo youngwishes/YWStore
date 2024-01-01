@@ -54,6 +54,10 @@ class User(JSONRepresentationMixin, SQLAlchemyBaseUserTable[int], Base):
     )
     roles: Mapped[list[Role]] = association_proxy("roles_associations", "role")
 
+    @property
+    def roles_set(self):
+        return {role.name for role in self.roles}
+
     def __repr__(self) -> str:
         return self.email
 

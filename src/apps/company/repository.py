@@ -37,10 +37,10 @@ class CompanyRepository(IRepository):
         await self.session.commit()
         return company
 
-    async def get_by_pk(self, pk: int) -> Company | None:
+    async def get_by_pk(self, company_pk: int) -> Company | None:
         company = await self.session.execute(
             select(self.model).where(
-                self.model.id == pk,
+                self.model.id == company_pk,
                 self.model.is_hidden == false(),
                 self.model.is_verified == true(),
             ),
@@ -57,32 +57,32 @@ class CompanyRepository(IRepository):
         await self.session.execute(delete(self.model))
         await self.session.commit()
 
-    async def delete_by_pk(self, pk: int) -> bool:
+    async def delete_by_pk(self, company_pk: int) -> bool:
         result = await self.session.execute(
-            delete(self.model).where(self.model.id == pk),
+            delete(self.model).where(self.model.id == company_pk),
         )
         await self.session.commit()
         return bool(result.rowcount)
 
     async def update(
         self,
-        pk: int,
+        company_pk: int,
         data: CompanyIn | CompanyOptional,
         partial: bool = False,
     ) -> Company:
         updated_company = await self.session.execute(
             update(self.model)
             .returning(self.model)
-            .where(self.model.id == pk)
+            .where(self.model.id == company_pk)
             .values(
                 **data.model_dump(exclude_none=partial),
                 updated_at=datetime.now(),
             ),
         )
         await self.session.commit()
-        return updated_company.unique().scalar_one_or_none()
+        return updated_company.unique().scalar_one()
 
-    async def update_is_verified(self, pk: int, is_verified: bool) -> Company | None:
+    async def update_is_verified(self, pk: int, is_verified: bool) -> Company:
         verified_company = await self.session.execute(
             update(self.model)
             .returning(self.model)
@@ -90,14 +90,18 @@ class CompanyRepository(IRepository):
             .values(is_verified=is_verified),
         )
         await self.session.commit()
-        return verified_company.unique().scalar_one_or_none()
+        return verified_company.unique().scalar_one()
 
-    async def update_is_hidden(self, pk: int, is_hidden: bool) -> Company | None:
+    async def update_is_hidden(
+        self,
+        company_pk: int,
+        is_hidden: bool,
+    ) -> Company | None:
         hidden_company = await self.session.execute(
             update(self.model)
             .returning(self.model)
-            .where(self.model.id == pk)
+            .where(self.model.id == company_pk)
             .values(is_hidden=is_hidden),
         )
         await self.session.commit()
-        return hidden_company.unique().scalar_one_or_none()
+        return hidden_company.unique().scalar_one()

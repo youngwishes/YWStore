@@ -4,8 +4,11 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from fastapi_users import BaseUserManager, IntegerIDMixin
+from fastapi_users.exceptions import UserNotExists
+from fastapi import status
 
 from src.core.config import get_settings
+from src.core.exceptions import NotFoundError
 from src.core.users.models import User
 from src.core.users.schemas import UserUpdate
 
@@ -32,3 +35,13 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
         update_json["last_login"] = datetime.now()
 
         await self.update(UserUpdate(**update_json), user, safe=True, request=request)
+
+    async def get_user_or_404(self, user_pk: int):
+        try:
+            return await self.get(id=user_pk)
+        except UserNotExists:
+            raise NotFoundError(
+                detail="Пользователь с идентификатором %s не был найден в системе"
+                % user_pk,
+                status_code=status.HTTP_404_NOT_FOUND,
+            )

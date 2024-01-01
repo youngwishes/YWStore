@@ -6,7 +6,6 @@ from src.apps.roles.enums import CompanyRoles
 from src.core.users.auth import current_user, superuser
 from src.apps.company.depends import company_service
 from src.permissions.utils import permissions
-from src.core.exceptions import UniqueConstraintError, NotFoundError
 from src.core.http_response_schemas import (
     Unauthorized,
     UniqueConstraint,
@@ -14,7 +13,7 @@ from src.core.http_response_schemas import (
     NotAllowed,
 )
 from src.core.users.models import User
-from src.apps.company.validators import is_company_admin
+from src.apps.company.validators import is_current_company_admin
 
 if TYPE_CHECKING:
     from src.apps.company.service import CompanyService
@@ -39,12 +38,6 @@ async def register_company(
     service: CompanyService = Depends(company_service),
     _: User = Depends(superuser),
 ) -> CompanyOut:
-    if await service.get_by_name(name=company.name):
-        raise UniqueConstraintError(
-            detail="Компания с названием <%s> уже зарегистрирована в системе"
-            % company.name,
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
     return await service.create(in_model=company)
 
 
@@ -79,7 +72,7 @@ async def delete_companies(
 
 
 @company_router.get(
-    "/{pk}",
+    "/{company_pk}",
     status_code=status.HTTP_200_OK,
     description="Детальное представление компании",
     response_model=CompanyOut,
@@ -89,20 +82,14 @@ async def delete_companies(
     },
 )
 async def company_detail(
-    pk: int,
+    company_pk: int,
     service: CompanyService = Depends(company_service),
 ) -> CompanyOut:
-    company = await service.get_by_pk(pk=pk)
-    if not company:
-        raise NotFoundError(
-            detail="Компания с идентификатором %s не была найдена" % pk,
-            status_code=404,
-        )
-    return company
+    return await service.get_company_or_404(company_pk=company_pk)
 
 
 @company_router.delete(
-    "/{pk}",
+    "/{company_pk}",
     description="Удалить компанию",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
@@ -111,20 +98,15 @@ async def company_detail(
     },
 )
 async def delete_company(
-    pk: int,
+    company_pk: int,
     service: CompanyService = Depends(company_service),
     _: User = Depends(superuser),
 ):
-    is_deleted = await service.delete_by_pk(pk=pk)
-    if not is_deleted:
-        raise NotFoundError(
-            detail="Компания с идентификатором %s не была найдена" % pk,
-            status_code=404,
-        )
+    await service.delete_by_pk(company_pk=company_pk)
 
 
 @company_router.put(
-    "/{pk}",
+    "/{company_pk}",
     description="Обновить учетные данные компании",
     status_code=status.HTTP_200_OK,
     response_model=CompanyOut,
@@ -133,31 +115,18 @@ async def delete_company(
         status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
-@permissions(allowed_roles=[CompanyRoles.ADMIN], validators=[is_company_admin])
+@permissions(allowed_roles=[CompanyRoles.ADMIN], validators=[is_current_company_admin])
 async def update_company(
-    pk: int,
+    company_pk: int,
     company: CompanyIn,
     service: CompanyService = Depends(company_service),
     _: User = Depends(current_user),
 ) -> CompanyOut:
-    company_exists = await service.get_by_pk(pk=pk)
-    if not company_exists:
-        raise NotFoundError(
-            detail="Компания с идентификатором %s не была найдена" % pk,
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
-    if await service.get_by_name(name=company.name):
-        raise UniqueConstraintError(
-            detail="Компания с названием <%s> уже зарегистрирована в системе"
-            % company.name,
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
-    updated_company = await service.update(pk=pk, data=company)
-    return updated_company
+    return await service.update(company_pk=company_pk, data=company, partial=False)
 
 
 @company_router.patch(
-    "/{pk}",
+    "/{company_pk}",
     description="Обновить учетные данные компании частично",
     response_model=CompanyOut,
     responses={
@@ -165,31 +134,18 @@ async def update_company(
         status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
-@permissions(allowed_roles=[CompanyRoles.ADMIN], validators=[is_company_admin])
+@permissions(allowed_roles=[CompanyRoles.ADMIN], validators=[is_current_company_admin])
 async def update_company_partially(
-    pk: int,
+    company_pk: int,
     company: CompanyOptional,
     service: CompanyService = Depends(company_service),
     _: User = Depends(current_user),
 ) -> CompanyOut:
-    company_exists = await service.get_by_pk(pk=pk)
-    if not company_exists:
-        raise NotFoundError(
-            detail="Компания с идентификатором %s не была найдена" % pk,
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
-    if await service.get_by_name(name=company.name):
-        raise UniqueConstraintError(
-            detail="Компания с названием <%s> уже зарегистрирована в системе"
-            % company.name,
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
-    updated_company = await service.update(pk=pk, data=company, partial=True)
-    return updated_company
+    return await service.update(company_pk=company_pk, data=company, partial=True)
 
 
 @company_router.patch(
-    "/{pk}/verify",
+    "/{company_pk}/verify",
     responses={
         status.HTTP_200_OK: {"model": CompanyOut},
         status.HTTP_404_NOT_FOUND: {"model": NotFound},
@@ -198,22 +154,19 @@ async def update_company_partially(
     },
 )
 async def verify_company(
-    pk: int,
+    company_pk: int,
     is_verified: bool = Body(default=True, embed=True),
     _: User = Depends(superuser),
     service: CompanyService = Depends(company_service),
 ) -> CompanyOut:
-    company = await service.update_is_verified(pk=pk, is_verified=is_verified)
-    if not company:
-        raise NotFoundError(
-            detail="Компания с идентификатором %s не была найдена" % pk,
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
-    return company
+    return await service.update_is_verified(
+        company_pk=company_pk,
+        is_verified=is_verified,
+    )
 
 
 @company_router.patch(
-    "/{pk}/hide",
+    "/{company_pk}/hide",
     responses={
         status.HTTP_200_OK: {"model": CompanyOut},
         status.HTTP_404_NOT_FOUND: {"model": NotFound},
@@ -222,15 +175,9 @@ async def verify_company(
     },
 )
 async def hide_company(
-    pk: int,
+    company_pk: int,
     is_hidden: bool = Body(default=True, embed=True),
     _: User = Depends(superuser),
     service: CompanyService = Depends(company_service),
 ) -> CompanyOut:
-    company = await service.update_is_hidden(pk=pk, is_hidden=is_hidden)
-    if not company:
-        raise NotFoundError(
-            detail="Компания с идентификатором %s не была найдена" % pk,
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
-    return company
+    return await service.update_is_hidden(company_pk=company_pk, is_hidden=is_hidden)
