@@ -23,3 +23,4 @@ docker exec ywstore-postgres /usr/bin/pg_dump -h localhost -U YWStore YWStore > 
 ```
 
 ## Архитектура приложения
+![Архитектура](https://i.ibb.co/QN355zP/Screenshot-from-2024-01-01-23-16-54.png)
