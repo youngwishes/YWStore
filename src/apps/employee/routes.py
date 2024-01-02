@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Sequence, TYPE_CHECKING
 from fastapi import APIRouter, status, Depends
-from src.apps.employee.depends import employee_controller
+from src.apps.employee.depends import get_employee_controller
 from src.apps.employee.models import Employee
 from src.apps.employee.schemas import (
     EmployeeIn,
@@ -38,7 +38,7 @@ employee_router = APIRouter()
 )
 async def add_employee(
     employee: EmployeeIn,
-    controller: EmployeeController = Depends(employee_controller),
+    controller: EmployeeController = Depends(get_employee_controller),
 ) -> EmployeeOut:
     return await controller.create(in_model=employee)
 
@@ -56,7 +56,7 @@ async def add_employee(
 )
 async def get_employees(
     company_pk: int,
-    controller: EmployeeController = Depends(employee_controller),
+    controller: EmployeeController = Depends(get_employee_controller),
 ) -> Sequence[Employee]:
     return await controller.get(company_pk=company_pk)
 
@@ -73,7 +73,7 @@ async def get_employees(
 async def delete_employee(
     user_pk: int,
     company_pk: int,
-    controller: EmployeeController = Depends(employee_controller),
+    controller: EmployeeController = Depends(get_employee_controller),
     _: User = Depends(superuser),
 ):
     await controller.delete_from_company_by_pk(company_pk=company_pk, user_pk=user_pk)
@@ -95,7 +95,7 @@ async def update_employee_partially(
     user_pk: int,
     company_pk: int,
     employee: EmployeeOptional,
-    controller: EmployeeController = Depends(employee_controller),
+    controller: EmployeeController = Depends(get_employee_controller),
     _: User = Depends(superuser),
 ) -> EmployeeOut:
     return await controller.update(

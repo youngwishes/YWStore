@@ -18,12 +18,7 @@ class CompanyService(IService):
         return await self._repo.get()
 
     async def create(self, in_model: CompanyIn) -> Company:
-        if await self.get_by_name(name=in_model.name):
-            raise UniqueConstraintError(
-                detail="Компания с названием <%s> уже зарегистрирована в системе"
-                % in_model.name,
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
+        await self._check_name_is_unique(name=in_model.name)
         return await self._repo.create(in_model=in_model)
 
     async def get_company_or_404(self, company_pk: int) -> Company | None:
@@ -34,18 +29,12 @@ class CompanyService(IService):
             status_code=404,
         )
 
-    async def get_by_name(self, name: str) -> Company | None:
-        return await self._repo.get_by_name(name=name)
-
     async def delete(self) -> None:
         await self._repo.delete()
 
     async def delete_by_pk(self, company_pk: int) -> None:
-        if not await self._repo.delete_by_pk(company_pk=company_pk):
-            raise NotFoundError(
-                detail="Компания с идентификатором %s не была найдена" % company_pk,
-                status_code=404,
-            )
+        await self.get_company_or_404(company_pk=company_pk)
+        await self._repo.delete_by_pk(company_pk=company_pk)
 
     async def update_is_verified(self, company_pk: int, is_verified: bool) -> Company:
         await self.get_company_or_404(company_pk=company_pk)
@@ -68,14 +57,17 @@ class CompanyService(IService):
         partial: bool,
     ) -> Company:
         await self.get_company_or_404(company_pk=company_pk)
-        if await self.get_by_name(name=data.name):
-            raise UniqueConstraintError(
-                detail="Компания с названием <%s> уже зарегистрирована в системе"
-                % data.name,
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
+        await self._check_name_is_unique(name=data.name)
         return await self._repo.update(
             company_pk=company_pk,
             data=data,
             partial=partial,
         )
+
+    async def _check_name_is_unique(self, name: str) -> None:
+        if await self._repo.get_by_name(name=name):
+            raise UniqueConstraintError(
+                detail="Компания с названием <%s> уже зарегистрирована в системе"
+                % name,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )

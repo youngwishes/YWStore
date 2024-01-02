@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from fastapi import Depends
-from src.apps.company.depends import company_service
+from src.apps.company.depends import get_company_service
 from src.core.users.depends import get_session
 from src.apps.employee.repository import EmployeeRepository
 from src.apps.employee.service import EmployeeService
@@ -16,21 +16,21 @@ if TYPE_CHECKING:
 
 async def _employee_repository(
     session: AsyncSession = Depends(get_session),
-) -> EmployeeService:
+) -> EmployeeRepository:
     yield EmployeeRepository(session=session)
 
 
 async def _employee_service(
     repository: EmployeeRepository = Depends(_employee_repository),
-):
+) -> EmployeeService:
     yield EmployeeService(repo=repository)
 
 
-async def employee_controller(
+async def get_employee_controller(
     employee_service: EmployeeService = Depends(_employee_service),
-    comp_service: CompanyService = Depends(company_service),
+    comp_service: CompanyService = Depends(get_company_service),
     user_service: UserService = Depends(get_user_service),
-):
+) -> EmployeeController:
     yield EmployeeController(
         employee_service=employee_service,
         company_service=comp_service,
@@ -38,4 +38,4 @@ async def employee_controller(
     )
 
 
-__all__ = ["employee_controller"]
+__all__ = ["get_employee_controller"]

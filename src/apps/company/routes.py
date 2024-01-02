@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Body, status
 from src.apps.company.schemas import CompanyIn, CompanyOut, CompanyOptional
 from src.apps.roles.enums import CompanyRoles
 from src.core.users.auth import current_user, superuser
-from src.apps.company.depends import company_service
+from src.apps.company.depends import get_company_service
 from src.permissions.utils import permissions
 from src.core.http_response_schemas import (
     Unauthorized,
@@ -35,7 +35,7 @@ company_router = APIRouter()
 )
 async def register_company(
     company: CompanyIn,
-    service: CompanyService = Depends(company_service),
+    service: CompanyService = Depends(get_company_service),
     _: User = Depends(superuser),
 ) -> CompanyOut:
     return await service.create(in_model=company)
@@ -49,7 +49,7 @@ async def register_company(
     responses={status.HTTP_200_OK: {"model": Sequence[CompanyOut]}},
 )
 async def companies_list(
-    service: CompanyService = Depends(company_service),
+    service: CompanyService = Depends(get_company_service),
 ) -> Sequence[CompanyOut]:
     return await service.get()
 
@@ -65,7 +65,7 @@ async def companies_list(
     },
 )
 async def delete_companies(
-    service: CompanyService = Depends(company_service),
+    service: CompanyService = Depends(get_company_service),
     _: User = Depends(superuser),
 ):
     await service.delete()
@@ -83,7 +83,7 @@ async def delete_companies(
 )
 async def company_detail(
     company_pk: int,
-    service: CompanyService = Depends(company_service),
+    service: CompanyService = Depends(get_company_service),
 ) -> CompanyOut:
     return await service.get_company_or_404(company_pk=company_pk)
 
@@ -99,7 +99,7 @@ async def company_detail(
 )
 async def delete_company(
     company_pk: int,
-    service: CompanyService = Depends(company_service),
+    service: CompanyService = Depends(get_company_service),
     _: User = Depends(superuser),
 ):
     await service.delete_by_pk(company_pk=company_pk)
@@ -119,7 +119,7 @@ async def delete_company(
 async def update_company(
     company_pk: int,
     company: CompanyIn,
-    service: CompanyService = Depends(company_service),
+    service: CompanyService = Depends(get_company_service),
     _: User = Depends(current_user),
 ) -> CompanyOut:
     return await service.update(company_pk=company_pk, data=company, partial=False)
@@ -138,7 +138,7 @@ async def update_company(
 async def update_company_partially(
     company_pk: int,
     company: CompanyOptional,
-    service: CompanyService = Depends(company_service),
+    service: CompanyService = Depends(get_company_service),
     _: User = Depends(current_user),
 ) -> CompanyOut:
     return await service.update(company_pk=company_pk, data=company, partial=True)
@@ -157,7 +157,7 @@ async def verify_company(
     company_pk: int,
     is_verified: bool = Body(default=True, embed=True),
     _: User = Depends(superuser),
-    service: CompanyService = Depends(company_service),
+    service: CompanyService = Depends(get_company_service),
 ) -> CompanyOut:
     return await service.update_is_verified(
         company_pk=company_pk,
@@ -178,6 +178,6 @@ async def hide_company(
     company_pk: int,
     is_hidden: bool = Body(default=True, embed=True),
     _: User = Depends(superuser),
-    service: CompanyService = Depends(company_service),
+    service: CompanyService = Depends(get_company_service),
 ) -> CompanyOut:
     return await service.update_is_hidden(company_pk=company_pk, is_hidden=is_hidden)

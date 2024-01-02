@@ -6,10 +6,10 @@ from src.apps.roles.controller import RoleController
 from src.core.users.depends import get_session, get_user_service
 from src.apps.roles.repository import RoleRepository
 from src.apps.roles.service import RoleService
-from src.core.users.manager import UserService
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
+    from src.core.users.manager import UserService
 
 
 async def _user_role_repository(
@@ -24,11 +24,11 @@ async def _user_role_service(
     yield RoleService(repo=repository)
 
 
-async def user_role_controller(
+async def get_role_controller(
     role_service: RoleService = Depends(_user_role_service),
     user_service: UserService = Depends(get_user_service),
-):
+) -> RoleController:
     yield RoleController(role_service=role_service, user_service=user_service)
 
 
-__all__ = ["user_role_controller"]
+__all__ = ["get_role_controller"]

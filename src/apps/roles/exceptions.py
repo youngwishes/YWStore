@@ -2,7 +2,7 @@ from fastapi.exceptions import HTTPException
 
 
 class AdminRequiredError(HTTPException):
-    """Необходимо обладать правами администратора."""
+    """Необходимо обладать правами администратора компании."""
 
 
 class RoleNotExists(HTTPException):

@@ -15,7 +15,7 @@ class EmployeeController:
         employee_service: EmployeeService,
         company_service: CompanyService,
         user_service: UserService,
-    ):
+    ) -> None:
         self._employee_service = employee_service
         self._company_service = company_service
         self._user_service = user_service

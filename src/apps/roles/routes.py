@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Body, status
 from src.apps.roles.controller import RoleController
 from src.apps.roles.enums import CompanyRoles
 from src.apps.roles.schemas import RoleIn, RoleOut
-from src.apps.roles.depends import user_role_controller
+from src.apps.roles.depends import get_role_controller
 from src.core.http_response_schemas import NotFound, Unauthorized, NotAllowed
 from src.core.users.auth import superuser, current_user
 from src.core.users.schemas import UserRead
@@ -29,7 +29,7 @@ roles_router = APIRouter()
 )
 async def create_new_role(
     role: RoleIn,
-    controller: RoleController = Depends(user_role_controller),
+    controller: RoleController = Depends(get_role_controller),
     _: User = Depends(superuser),
 ) -> Role:
     return await controller.create(in_model=role)
@@ -47,7 +47,7 @@ async def create_new_role(
 )
 async def delete_role(
     role_pk: int,
-    controller: RoleController = Depends(user_role_controller),
+    controller: RoleController = Depends(get_role_controller),
     _: User = Depends(superuser),
 ):
     await controller.delete_role(role_pk=role_pk)
@@ -63,7 +63,7 @@ async def delete_role(
     },
 )
 async def delete_roles(
-    controller: RoleController = Depends(user_role_controller),
+    controller: RoleController = Depends(get_role_controller),
     _: User = Depends(superuser),
 ):
     await controller.delete()
@@ -79,7 +79,7 @@ async def delete_roles(
     },
 )
 async def get_roles(
-    controller: RoleController = Depends(user_role_controller),
+    controller: RoleController = Depends(get_role_controller),
     _: User = Depends(current_user),
 ) -> Sequence[Role]:
     return await controller.get()
@@ -99,7 +99,7 @@ async def get_roles(
 async def update_role(
     role_pk: int,
     new_name: str = Body(embed=True),
-    controller: RoleController = Depends(user_role_controller),
+    controller: RoleController = Depends(get_role_controller),
     _: User = Depends(superuser),
 ) -> Role:
     return await controller.update(role_pk=role_pk, new_name=new_name, partial=False)
@@ -122,7 +122,7 @@ async def update_role(
 async def add_role_to_user(
     user_pk: int,
     roles_list: Sequence[CompanyRoles] = Body(embed=True),
-    controller: RoleController = Depends(user_role_controller),
+    controller: RoleController = Depends(get_role_controller),
     _: User = Depends(superuser),
 ) -> User:
     return await controller.add_roles_to_user(user_pk=user_pk, roles_list=roles_list)

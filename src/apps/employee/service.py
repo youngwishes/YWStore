@@ -19,14 +19,10 @@ class EmployeeService(IService):
         return await self._repo.get(company_pk=company_pk)
 
     async def create(self, in_model: EmployeeIn) -> Employee:
-        if await self._repo.check_user_already_in_company(
+        await self._check_user_already_in_company(
             company_pk=in_model.company_id,
             user_pk=in_model.user_id,
-        ):
-            raise UniqueConstraintError(
-                detail="Пользователь уже состоит в компании",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
+        )
         return await self._repo.create(in_model=in_model)
 
     async def update(
@@ -51,3 +47,17 @@ class EmployeeService(IService):
             user_pk=user_pk,
             company_pk=company_pk,
         )
+
+    async def _check_user_already_in_company(
+        self,
+        company_pk: int,
+        user_pk: int,
+    ) -> None:
+        if await self._repo._check_user_already_in_company(
+            company_pk=company_pk,
+            user_pk=user_pk,
+        ):
+            raise UniqueConstraintError(
+                detail="Пользователь уже состоит в компании",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
