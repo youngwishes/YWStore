@@ -3,7 +3,7 @@ from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.users.models import User
 from src.core.sql.database import get_session
-from src.core.users.manager import UserManager
+from src.core.users.manager import UserService
 
 
 async def get_user_db(
@@ -12,5 +12,5 @@ async def get_user_db(
     yield SQLAlchemyUserDatabase(session, User)
 
 
-async def get_user_manager(user_db=Depends(get_user_db)) -> UserManager:
-    yield UserManager(user_db)
+async def get_user_service(user_db=Depends(get_user_db)) -> UserService:
+    yield UserService(user_db)

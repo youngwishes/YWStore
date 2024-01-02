@@ -17,7 +17,7 @@ from src.apps.employee.models import Employee
 from src.apps.roles.enums import CompanyRoles
 from src.core.config import get_settings
 from src.core.sql.database import Base, get_session
-from src.core.users.manager import UserManager
+from src.core.users.manager import UserService
 from src.core.users.models import User, Role
 from src.core.users.schemas import UserCreate
 from src.main import app
@@ -90,10 +90,10 @@ async def get_test_user_db(
 
 
 @pytest.fixture
-async def get_test_user_manager(
+async def get_test_user_service(
     get_test_user_db: SQLAlchemyUserDatabase,
-) -> AsyncGenerator[UserManager, None]:
-    yield UserManager(get_test_user_db)
+) -> AsyncGenerator[UserService, None]:
+    yield UserService(get_test_user_db)
 
 
 @pytest.fixture
@@ -167,10 +167,10 @@ def get_test_users_data(get_test_user_data) -> list[dict]:
 async def create_test_user(
     session: AsyncSession,
     get_test_user_data: dict,
-    get_test_user_manager: UserManager,
+    get_test_user_service: UserService,
 ) -> User:
     create_user_schema = UserCreate(**get_test_user_data)
-    user = await get_test_user_manager.create(create_user_schema)
+    user = await get_test_user_service.create(create_user_schema)
     return user
 
 
@@ -193,13 +193,13 @@ def init_employee_data(
 @pytest.fixture
 async def create_test_users(
     get_test_users_data: list[dict],
-    get_test_user_manager: UserManager,
+    get_test_user_service: UserService,
 ) -> Sequence[User]:
     create_users_schemas = [
         UserCreate(**test_user_data) for test_user_data in get_test_users_data
     ]
     users = [
-        await get_test_user_manager.create(user_schema)
+        await get_test_user_service.create(user_schema)
         for user_schema in create_users_schemas
     ]
     return users

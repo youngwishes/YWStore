@@ -15,10 +15,10 @@ async def _company_repository(
     yield CompanyRepository(session=session)
 
 
-async def company_service(
+async def get_company_service(
     repository: CompanyRepository = Depends(_company_repository),
 ) -> CompanyService:
     yield CompanyService(repo=repository)
 
 
-__all__ = ["company_service"]
+__all__ = ["get_company_service"]
