@@ -6,7 +6,7 @@ from fastapi_users.authentication import (
 )
 
 from src.core.config import get_settings
-from src.core.users.depends import get_user_manager
+from src.core.users.depends import get_user_service
 from src.core.users.models import User
 from src.core.users.schemas import UserRead, UserCreate
 
@@ -31,7 +31,7 @@ auth_backend = AuthenticationBackend(
 )
 
 fastapi_users = FastAPIUsers[User, int](
-    get_user_manager,
+    get_user_service,
     [auth_backend],
 )
 

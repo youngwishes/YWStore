@@ -7,17 +7,17 @@ from src.core.users.models import Role, User
 
 if TYPE_CHECKING:
     from src.apps.roles.service import RoleService
-    from src.core.users.manager import UserManager
+    from src.core.users.manager import UserService
 
 
 class RoleController:
     def __init__(
         self,
         role_service: RoleService,
-        user_manager: UserManager,
+        user_service: UserService,
     ):
         self._role_service = role_service
-        self._user_manager = user_manager
+        self._user_service = user_service
 
     async def get(self) -> Sequence[Role]:
         return await self._role_service.get()
@@ -43,7 +43,7 @@ class RoleController:
         user_pk: int,
         roles_list: Sequence[CompanyRoles],
     ) -> User:
-        user = await self._user_manager.get_user_or_404(user_pk=user_pk)
+        user = await self._user_service.get_user_or_404(user_pk=user_pk)
         return await self._role_service.add_roles_to_user(
             user=user,
             roles_list=roles_list,

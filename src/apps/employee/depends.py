@@ -6,11 +6,11 @@ from src.core.users.depends import get_session
 from src.apps.employee.repository import EmployeeRepository
 from src.apps.employee.service import EmployeeService
 from src.apps.employee.controller import EmployeeController
-from src.core.users.depends import get_user_manager
+from src.core.users.depends import get_user_service
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
-    from src.core.users.manager import UserManager
+    from src.core.users.manager import UserService
     from src.apps.company.service import CompanyService
 
 
@@ -29,12 +29,12 @@ async def _employee_service(
 async def employee_controller(
     employee_service: EmployeeService = Depends(_employee_service),
     comp_service: CompanyService = Depends(company_service),
-    user_manager: UserManager = Depends(get_user_manager),
+    user_service: UserService = Depends(get_user_service),
 ):
     yield EmployeeController(
         employee_service=employee_service,
         company_service=comp_service,
-        user_manager=user_manager,
+        user_service=user_service,
     )
 
 

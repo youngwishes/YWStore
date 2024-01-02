@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 settings = get_settings()
 
 
-class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
+class UserService(IntegerIDMixin, BaseUserManager[User, int]):
     reset_password_token_secret = settings.SECRET_KEY
     verification_token_secret = settings.SECRET_KEY
 
