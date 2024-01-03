@@ -38,7 +38,7 @@ class EmployeeRepository(IRepository):
         )
         await self._session.commit()
 
-    async def _check_user_already_in_company(
+    async def check_user_already_in_company(
         self,
         company_pk: int,
         user_pk: int,
