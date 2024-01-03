@@ -38,7 +38,7 @@ class EmployeeRepository(IRepository):
         )
         await self._session.commit()
 
-    async def check_user_already_in_company(
+    async def _check_user_already_in_company(
         self,
         company_pk: int,
         user_pk: int,
@@ -53,7 +53,7 @@ class EmployeeRepository(IRepository):
 
     async def update(
         self,
-        pk: int,
+        user_pk: int,
         company_pk: int,
         data: EmployeeIn | EmployeeOptional,
         partial: bool = False,
@@ -61,7 +61,7 @@ class EmployeeRepository(IRepository):
         updated_employee = await self._session.execute(
             update(self.model)
             .returning(self.model)
-            .where(self.model.user_id == pk, self.model.company_id == company_pk)
+            .where(self.model.user_id == user_pk, self.model.company_id == company_pk)
             .values(
                 **data.model_dump(exclude_none=partial),
             ),
