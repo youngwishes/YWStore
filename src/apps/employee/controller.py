@@ -47,7 +47,7 @@ class EmployeeController:
         await self._company_service.get_company_or_404(company_pk=company_pk)
         await self._user_service.get_user_or_404(user_pk=user_pk)
         return await self._employee_service.update(
-            pk=user_pk,
+            user_pk=user_pk,
             company_pk=company_pk,
             data=data,
             partial=partial,

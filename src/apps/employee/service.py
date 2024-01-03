@@ -27,13 +27,13 @@ class EmployeeService(IService):
 
     async def update(
         self,
-        pk: int,
+        user_pk: int,
         company_pk: int,
         data: EmployeeIn | EmployeeOptional,
         partial: bool = False,
     ) -> Employee:
         return await self._repo.update(
-            user_pk=pk,
+            user_pk=user_pk,
             company_pk=company_pk,
             data=data,
             partial=partial,
