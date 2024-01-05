@@ -1,13 +1,13 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 from src.core.interfaces import IRepository
-from src.core.users.models import Role
+from src.apps.users.models import Role
 from sqlalchemy.sql import delete, select, update
 
 if TYPE_CHECKING:
     from src.apps.roles.schemas import RoleIn
     from sqlalchemy.ext.asyncio import AsyncSession
-    from src.core.users.models import User
+    from src.apps.users.models import User
 
 
 class RoleRepository(IRepository):

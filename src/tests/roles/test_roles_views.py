@@ -8,12 +8,12 @@ from src.main import app
 from src.apps.roles.enums import CompanyRoles
 from src.tests.defaults import TEST_ROLE_NEW_NAME, TEST_ROLE_NAME
 from src.tests.helpers import check_object_data, get_objects_count, get_object
-from src.core.users.models import Role
+from src.apps.users.models import Role
 
 if TYPE_CHECKING:
     from httpx import AsyncClient
     from sqlalchemy.ext.asyncio import AsyncSession
-    from src.core.users.models import User
+    from src.apps.users.models import User
 
 
 @pytest.mark.anyio

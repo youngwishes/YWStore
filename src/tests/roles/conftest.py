@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 import pytest
-from src.core.users.models import Role
+from src.apps.users.models import Role
 from src.apps.roles.enums import CompanyRoles
 from src.tests.defaults import TEST_ROLE_NAME
 from sqlalchemy.sql import select

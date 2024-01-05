@@ -14,8 +14,8 @@ from src.core.http_response_schemas import (
     Unauthorized,
     UniqueConstraint,
 )
-from src.core.users.auth import superuser
-from src.core.users.models import User
+from src.core.auth.strategy import superuser
+from src.apps.users.models import User
 
 if TYPE_CHECKING:
     from src.apps.employee.controller import EmployeeController

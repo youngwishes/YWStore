@@ -9,8 +9,8 @@ from fastapi import status
 
 from src.core.config import get_settings
 from src.core.exceptions import NotFoundError
-from src.core.users.models import User
-from src.core.users.schemas import UserUpdate
+from src.apps.users.models import User
+from src.apps.users.schemas import UserUpdate
 
 if TYPE_CHECKING:
     from fastapi import Request

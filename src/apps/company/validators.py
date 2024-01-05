@@ -7,7 +7,7 @@ from src.core.exceptions import IsOwnerError
 from src.permissions.utils import allow_superuser, is_member
 
 if TYPE_CHECKING:
-    from src.core.users.models import User
+    from src.apps.users.models import User
 
 
 @allow_superuser

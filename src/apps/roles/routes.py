@@ -6,11 +6,11 @@ from src.apps.roles.enums import CompanyRoles
 from src.apps.roles.schemas import RoleIn, RoleOut
 from src.apps.roles.depends import get_role_controller
 from src.core.http_response_schemas import NotFound, Unauthorized, NotAllowed
-from src.core.users.auth import superuser, current_user
-from src.core.users.schemas import UserRead
+from src.core.auth.strategy import superuser, current_user
+from src.apps.users.schemas import UserOut
 
 if TYPE_CHECKING:
-    from src.core.users.models import Role, User
+    from src.apps.users.models import Role, User
 
 
 roles_router = APIRouter()
@@ -107,10 +107,10 @@ async def update_role(
 
 @roles_router.post(
     "/{user_pk}",
-    response_model=UserRead,
+    response_model=UserOut,
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_200_OK: {"model": UserRead},
+        status.HTTP_200_OK: {"model": UserOut},
         status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
         status.HTTP_403_FORBIDDEN: {"model": NotAllowed},
         status.HTTP_404_NOT_FOUND: {"model": NotFound},

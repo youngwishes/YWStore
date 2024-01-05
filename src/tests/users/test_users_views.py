@@ -6,7 +6,7 @@ import pytest
 from fastapi import status
 from sqlalchemy import select
 
-from src.core.users.models import User
+from src.apps.users.models import User
 from src.main import app
 from src.tests import defaults
 from src.tests.helpers import get_objects_count, get_object, check_object_data

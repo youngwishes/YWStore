@@ -3,11 +3,11 @@ from typing import TYPE_CHECKING, Sequence
 
 from src.apps.roles.enums import CompanyRoles
 from src.apps.roles.schemas import RoleIn
-from src.core.users.models import Role, User
+from src.apps.users.models import Role, User
 
 if TYPE_CHECKING:
     from src.apps.roles.service import RoleService
-    from src.core.users.manager import UserService
+    from src.apps.users.service import UserService
 
 
 class RoleController:

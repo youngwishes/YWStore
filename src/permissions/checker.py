@@ -5,7 +5,7 @@ from src.apps.roles.exceptions import RoleNotExists
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
-    from src.core.users.models import User
+    from src.apps.users.models import User
 
 
 class PermissionChecker:

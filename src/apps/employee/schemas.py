@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from src.core.utils import optional
-from src.core.users.schemas import UserRead
+from src.apps.users.schemas import UserOut
 
 
 class BaseEmployee(BaseModel):
@@ -20,7 +20,7 @@ class EmployeeIn(BaseEmployee):
 
 
 class EmployeeOut(BaseEmployee):
-    user: UserRead
+    user: UserOut
 
 
 @optional

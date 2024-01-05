@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Sequence
 from fastapi import APIRouter, Depends, Body, status
 from src.apps.company.schemas import CompanyIn, CompanyOut, CompanyOptional
 from src.apps.roles.enums import CompanyRoles
-from src.core.users.auth import current_user, superuser
+from src.core.auth.strategy import current_user, superuser
 from src.apps.company.depends import get_company_service
 from src.permissions.utils import permissions
 from src.core.http_response_schemas import (
@@ -12,7 +12,7 @@ from src.core.http_response_schemas import (
     NotFound,
     NotAllowed,
 )
-from src.core.users.models import User
+from src.apps.users.models import User
 from src.apps.company.validators import is_current_company_admin
 
 if TYPE_CHECKING:
