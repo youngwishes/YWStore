@@ -1,11 +1,9 @@
 from __future__ import annotations
-import os
-from pathlib import Path
 from typing import Optional, Any
 from copy import deepcopy
 from pydantic import BaseModel, create_model
 from pydantic.fields import FieldInfo
-from importlib import import_module
+from src.apps.users.models import User
 from src.core.config import get_settings
 
 settings = get_settings()
@@ -39,19 +37,5 @@ def optional(cls: type[BaseModel]) -> type[BaseModel]:
     )
 
 
-def import_schema(schema_class_name: str) -> type[BaseModel]:
-    schema_file_name = "schemas"
-    exclude = ["__pycache__", "__init__.py"]
-    for app_name in os.listdir(settings.BASE_MODULE_PATH):
-        if app_name not in exclude:
-            app_module_path = Path.joinpath(
-                settings.BASE_MODULE_PATH,
-                app_name,
-                schema_file_name,
-            )
-            module_path = ".".join(str(app_module_path).split("/"))
-            module = import_module(module_path)
-            try:
-                return getattr(module, schema_class_name)
-            except AttributeError:
-                ...
+async def is_member(user: User, role: str) -> bool:
+    return role in user.roles_set

@@ -14,14 +14,14 @@ async def _get_user_db(
     yield SQLAlchemyUserDatabase(session, User)
 
 
-async def _get_user_service(user_db=Depends(_get_user_db)) -> UserService:
+async def get_user_service(user_db=Depends(_get_user_db)) -> UserService:
     yield UserService(user_db)
 
 
 async def get_user_controller(
-    service: UserService = Depends(_get_user_service),
+    service: UserService = Depends(get_user_service),
 ) -> UserController:
     yield UserController(service=service)
 
 
-__all__ = ["get_user_controller"]
+__all__ = ["get_user_service", "get_user_controller"]

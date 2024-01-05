@@ -6,7 +6,7 @@ from src.apps.roles.enums import CompanyRoles
 from src.apps.roles.schemas import RoleIn, RoleOut
 from src.apps.roles.depends import get_role_controller
 from src.core.http_response_schemas import NotFound, Unauthorized, NotAllowed
-from src.core.auth.strategy import superuser, current_user
+from src.core.auth.strategy import get_superuser, get_current_user
 from src.apps.users.schemas import UserOut
 
 if TYPE_CHECKING:
@@ -30,7 +30,7 @@ roles_router = APIRouter()
 async def create_new_role(
     role: RoleIn,
     controller: RoleController = Depends(get_role_controller),
-    _: User = Depends(superuser),
+    _: User = Depends(get_superuser),
 ) -> Role:
     return await controller.create(in_model=role)
 
@@ -48,7 +48,7 @@ async def create_new_role(
 async def delete_role(
     role_pk: int,
     controller: RoleController = Depends(get_role_controller),
-    _: User = Depends(superuser),
+    _: User = Depends(get_superuser),
 ):
     await controller.delete_role(role_pk=role_pk)
 
@@ -64,7 +64,7 @@ async def delete_role(
 )
 async def delete_roles(
     controller: RoleController = Depends(get_role_controller),
-    _: User = Depends(superuser),
+    _: User = Depends(get_superuser),
 ):
     await controller.delete()
 
@@ -80,7 +80,7 @@ async def delete_roles(
 )
 async def get_roles(
     controller: RoleController = Depends(get_role_controller),
-    _: User = Depends(current_user),
+    _: User = Depends(get_current_user),
 ) -> Sequence[Role]:
     return await controller.get()
 
@@ -100,7 +100,7 @@ async def update_role(
     role_pk: int,
     new_name: str = Body(embed=True),
     controller: RoleController = Depends(get_role_controller),
-    _: User = Depends(superuser),
+    _: User = Depends(get_superuser),
 ) -> Role:
     return await controller.update(role_pk=role_pk, new_name=new_name, partial=False)
 
@@ -123,6 +123,6 @@ async def add_role_to_user(
     user_pk: int,
     roles_list: Sequence[CompanyRoles] = Body(embed=True),
     controller: RoleController = Depends(get_role_controller),
-    _: User = Depends(superuser),
+    _: User = Depends(get_superuser),
 ) -> User:
     return await controller.add_roles_to_user(user_pk=user_pk, roles_list=roles_list)

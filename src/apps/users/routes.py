@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status, Depends
 from src.apps.users.controller import UserController
 from src.core.http_response_schemas import UniqueConstraint, Unauthorized
-from src.core.auth.strategy import current_user
+from src.core.auth.strategy import get_current_user
 from src.apps.users.depends import get_user_controller
 from src.apps.users.models import User
 from src.apps.users.schemas import UserIn, UserOut, UserUpdate
@@ -37,7 +37,7 @@ async def register_user(
 )
 async def user_delete(
     controller: UserController = Depends(get_user_controller),
-    user: User = Depends(current_user),
+    user: User = Depends(get_current_user),
 ):
     await controller.delete(user_pk=user.id)
 
@@ -56,7 +56,7 @@ async def user_delete(
 async def user_edit(
     user_to_update: UserUpdate,
     controller: UserController = Depends(get_user_controller),
-    user: User = Depends(current_user),
+    user: User = Depends(get_current_user),
 ) -> UserOut:
     return await controller.update(data=user_to_update, user_pk=user.id)
 
@@ -73,6 +73,6 @@ async def user_edit(
 )
 async def get_user(
     controller: UserController = Depends(get_user_controller),
-    user: User = Depends(current_user),
+    user: User = Depends(get_current_user),
 ) -> UserOut:
     return await controller.get_user_by_pk(user_pk=user.id)

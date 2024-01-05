@@ -17,9 +17,12 @@ class CompanyService(IService):
     async def get(self) -> Sequence[Company]:
         return await self._repo.get()
 
-    async def create(self, in_model: CompanyIn) -> Company:
-        await self._check_name_is_unique(name=in_model.name)
-        return await self._repo.create(in_model=in_model)
+    async def delete(self) -> None:
+        await self._repo.delete()
+
+    async def delete_by_pk(self, company_pk: int) -> None:
+        await self.get_company_or_404(company_pk=company_pk)
+        await self._repo.delete_by_pk(company_pk=company_pk)
 
     async def get_company_or_404(self, company_pk: int) -> Company | None:
         if company := await self._repo.get_by_pk(company_pk=company_pk):
@@ -29,12 +32,9 @@ class CompanyService(IService):
             status_code=404,
         )
 
-    async def delete(self) -> None:
-        await self._repo.delete()
-
-    async def delete_by_pk(self, company_pk: int) -> None:
-        await self.get_company_or_404(company_pk=company_pk)
-        await self._repo.delete_by_pk(company_pk=company_pk)
+    async def create(self, in_model: CompanyIn) -> Company:
+        await self._check_name_is_unique(name=in_model.name)
+        return await self._repo.create(in_model=in_model)
 
     async def update_is_verified(self, company_pk: int, is_verified: bool) -> Company:
         await self.get_company_or_404(company_pk=company_pk)

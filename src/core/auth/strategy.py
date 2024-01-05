@@ -6,7 +6,7 @@ from fastapi_users.authentication import (
 )
 
 from src.core.config import get_settings
-from src.apps.users.depends import _get_user_service
+from src.apps.users.depends import get_user_service
 from src.apps.users.models import User
 from src.apps.users.schemas import UserOut, UserIn
 
@@ -31,11 +31,12 @@ jwt_backend = AuthenticationBackend(
 )
 
 fastapi_users = FastAPIUsers[User, int](
-    _get_user_service,
+    get_user_service,
     [jwt_backend],
 )
 
 auth_router = fastapi_users.get_auth_router(backend=jwt_backend)
 register_router = fastapi_users.get_register_router(UserOut, UserIn)
-current_user = fastapi_users.current_user(active=True)
-superuser = fastapi_users.current_user(superuser=True)
+
+get_current_user = fastapi_users.current_user(active=True)
+get_superuser = fastapi_users.current_user(superuser=True)

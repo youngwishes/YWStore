@@ -1,11 +1,12 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 from fastapi import APIRouter, Depends, Body, status
+
 from src.apps.company.schemas import CompanyIn, CompanyOut, CompanyOptional
-from src.apps.roles.enums import CompanyRoles
-from src.core.auth.strategy import current_user, superuser
-from src.apps.company.depends import get_company_service
-from src.permissions.utils import permissions
+from src.core.auth.strategy import get_superuser
+from src.apps.company.depends import get_company_controller
+from src.core.exceptions import IsOwnerError
+from src.apps.roles.access import get_company_admin
 from src.core.http_response_schemas import (
     Unauthorized,
     UniqueConstraint,
@@ -13,10 +14,9 @@ from src.core.http_response_schemas import (
     NotAllowed,
 )
 from src.apps.users.models import User
-from src.apps.company.validators import is_current_company_admin
 
 if TYPE_CHECKING:
-    from src.apps.company.service import CompanyService
+    from src.apps.company.controller import CompanyController
 
 company_router = APIRouter()
 
@@ -35,10 +35,10 @@ company_router = APIRouter()
 )
 async def register_company(
     company: CompanyIn,
-    service: CompanyService = Depends(get_company_service),
-    _: User = Depends(superuser),
+    controller: CompanyController = Depends(get_company_controller),
+    _: User = Depends(get_superuser),
 ) -> CompanyOut:
-    return await service.create(in_model=company)
+    return await controller.create(in_model=company)
 
 
 @company_router.get(
@@ -49,9 +49,9 @@ async def register_company(
     responses={status.HTTP_200_OK: {"model": Sequence[CompanyOut]}},
 )
 async def companies_list(
-    service: CompanyService = Depends(get_company_service),
+    controller: CompanyController = Depends(get_company_controller),
 ) -> Sequence[CompanyOut]:
-    return await service.get()
+    return await controller.get()
 
 
 @company_router.delete(
@@ -65,10 +65,10 @@ async def companies_list(
     },
 )
 async def delete_companies(
-    service: CompanyService = Depends(get_company_service),
-    _: User = Depends(superuser),
+    controller: CompanyController = Depends(get_company_controller),
+    _: User = Depends(get_superuser),
 ):
-    await service.delete()
+    await controller.delete()
 
 
 @company_router.get(
@@ -83,9 +83,9 @@ async def delete_companies(
 )
 async def company_detail(
     company_pk: int,
-    service: CompanyService = Depends(get_company_service),
+    controller: CompanyController = Depends(get_company_controller),
 ) -> CompanyOut:
-    return await service.get_company_or_404(company_pk=company_pk)
+    return await controller.get_company_or_404(company_pk=company_pk)
 
 
 @company_router.delete(
@@ -99,10 +99,10 @@ async def company_detail(
 )
 async def delete_company(
     company_pk: int,
-    service: CompanyService = Depends(get_company_service),
-    _: User = Depends(superuser),
+    controller: CompanyController = Depends(get_company_controller),
+    _: User = Depends(get_superuser),
 ):
-    await service.delete_by_pk(company_pk=company_pk)
+    await controller.delete_by_pk(company_pk=company_pk)
 
 
 @company_router.put(
@@ -115,14 +115,18 @@ async def delete_company(
         status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
-@permissions(allowed_roles=[CompanyRoles.ADMIN], validators=[is_current_company_admin])
 async def update_company(
     company_pk: int,
     company: CompanyIn,
-    service: CompanyService = Depends(get_company_service),
-    _: User = Depends(current_user),
+    controller: CompanyController = Depends(get_company_controller),
+    admin: User = Depends(get_company_admin),
 ) -> CompanyOut:
-    return await service.update(company_pk=company_pk, data=company, partial=False)
+    if not admin.employee.company_id == company_pk:
+        raise IsOwnerError(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Вы не имеете доступа к данной компании.",
+        )
+    return await controller.update(company_pk=company_pk, data=company, partial=False)
 
 
 @company_router.patch(
@@ -134,14 +138,18 @@ async def update_company(
         status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
-@permissions(allowed_roles=[CompanyRoles.ADMIN], validators=[is_current_company_admin])
 async def update_company_partially(
     company_pk: int,
     company: CompanyOptional,
-    service: CompanyService = Depends(get_company_service),
-    _: User = Depends(current_user),
+    controller: CompanyController = Depends(get_company_controller),
+    admin: User = Depends(get_company_admin),
 ) -> CompanyOut:
-    return await service.update(company_pk=company_pk, data=company, partial=True)
+    if not admin.employee.company_id == company_pk:
+        raise IsOwnerError(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Вы не имеете доступа к данной компании.",
+        )
+    return await controller.update(company_pk=company_pk, data=company, partial=True)
 
 
 @company_router.patch(
@@ -156,10 +164,10 @@ async def update_company_partially(
 async def verify_company(
     company_pk: int,
     is_verified: bool = Body(default=True, embed=True),
-    _: User = Depends(superuser),
-    service: CompanyService = Depends(get_company_service),
+    _: User = Depends(get_superuser),
+    controller: CompanyController = Depends(get_company_controller),
 ) -> CompanyOut:
-    return await service.update_is_verified(
+    return await controller.update_is_verified(
         company_pk=company_pk,
         is_verified=is_verified,
     )
@@ -177,7 +185,7 @@ async def verify_company(
 async def hide_company(
     company_pk: int,
     is_hidden: bool = Body(default=True, embed=True),
-    _: User = Depends(superuser),
-    service: CompanyService = Depends(get_company_service),
+    _: User = Depends(get_superuser),
+    controller: CompanyController = Depends(get_company_controller),
 ) -> CompanyOut:
-    return await service.update_is_hidden(company_pk=company_pk, is_hidden=is_hidden)
+    return await controller.update_is_hidden(company_pk=company_pk, is_hidden=is_hidden)
