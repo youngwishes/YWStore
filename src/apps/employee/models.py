@@ -3,7 +3,7 @@ from src.core.mixins import JSONRepresentationMixin
 from src.core.sql.database import Base
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import ForeignKey, String, Boolean
-from src.core.users.models import User
+from src.apps.users.models import User
 
 
 class Employee(JSONRepresentationMixin, Base):

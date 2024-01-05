@@ -17,9 +17,9 @@ from src.apps.employee.models import Employee
 from src.apps.roles.enums import CompanyRoles
 from src.core.config import get_settings
 from src.core.sql.database import Base, get_session
-from src.core.users.manager import UserService
-from src.core.users.models import User, Role
-from src.core.users.schemas import UserCreate
+from src.apps.users.service import UserService
+from src.apps.users.models import User, Role
+from src.apps.users.schemas import UserIn
 from src.main import app
 from src.tests import defaults
 
@@ -169,7 +169,7 @@ async def create_test_user(
     get_test_user_data: dict,
     get_test_user_service: UserService,
 ) -> User:
-    create_user_schema = UserCreate(**get_test_user_data)
+    create_user_schema = UserIn(**get_test_user_data)
     user = await get_test_user_service.create(create_user_schema)
     return user
 
@@ -196,7 +196,7 @@ async def create_test_users(
     get_test_user_service: UserService,
 ) -> Sequence[User]:
     create_users_schemas = [
-        UserCreate(**test_user_data) for test_user_data in get_test_users_data
+        UserIn(**test_user_data) for test_user_data in get_test_users_data
     ]
     users = [
         await get_test_user_service.create(user_schema)

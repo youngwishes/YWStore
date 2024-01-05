@@ -6,9 +6,9 @@ from fastapi_users.authentication import (
 )
 
 from src.core.config import get_settings
-from src.core.users.depends import get_user_service
-from src.core.users.models import User
-from src.core.users.schemas import UserRead, UserCreate
+from src.apps.users.depends import get_user_service
+from src.apps.users.models import User
+from src.apps.users.schemas import UserOut, UserIn
 
 settings = get_settings()
 
@@ -24,7 +24,7 @@ bearer_transport = BearerTransport(
     tokenUrl=settings.BASE_API_PREFIX + "/auth/jwt/login",
 )
 
-auth_backend = AuthenticationBackend(
+jwt_backend = AuthenticationBackend(
     name="jwt",
     transport=bearer_transport,
     get_strategy=get_jwt_strategy,
@@ -32,10 +32,11 @@ auth_backend = AuthenticationBackend(
 
 fastapi_users = FastAPIUsers[User, int](
     get_user_service,
-    [auth_backend],
+    [jwt_backend],
 )
 
-auth_router = fastapi_users.get_auth_router(backend=auth_backend)
-register_router = fastapi_users.get_register_router(UserRead, UserCreate)
-current_user = fastapi_users.current_user()
-superuser = fastapi_users.current_user(superuser=True)
+auth_router = fastapi_users.get_auth_router(backend=jwt_backend)
+register_router = fastapi_users.get_register_router(UserOut, UserIn)
+
+get_current_user = fastapi_users.current_user(active=True)
+get_superuser = fastapi_users.current_user(superuser=True)

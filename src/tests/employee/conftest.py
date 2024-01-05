@@ -11,7 +11,7 @@ from src.apps.employee.models import Employee
 from src.apps.employee.schemas import EmployeeIn
 
 if TYPE_CHECKING:
-    from src.core.users.models import User
+    from src.apps.users.models import User
     from src.apps.company.models import Company
 
 

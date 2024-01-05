@@ -7,7 +7,7 @@ from src.core.interfaces import IService
 from fastapi import status
 
 if TYPE_CHECKING:
-    from src.core.users.models import Role, User
+    from src.apps.users.models import Role, User
     from src.apps.roles.repository import RoleRepository
     from src.apps.roles.schemas import RoleIn
 

@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from src.core.users.auth import (
+from src.core.auth.strategy import (
     auth_router,
     register_router,
 )
@@ -7,7 +7,7 @@ from src.core.config import get_settings
 from src.apps.company.routes import company_router
 from src.apps.employee.routes import employee_router
 from src.apps.roles.routes import roles_router
-from src.core.users.routes import users_router
+from src.apps.users.routes import users_router
 
 description = """
 # Статус - в разработке ⚙️

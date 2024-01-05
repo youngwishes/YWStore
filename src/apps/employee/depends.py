@@ -2,15 +2,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from fastapi import Depends
 from src.apps.company.depends import get_company_service
-from src.core.users.depends import get_session
+from src.apps.users.depends import get_session
 from src.apps.employee.repository import EmployeeRepository
 from src.apps.employee.service import EmployeeService
 from src.apps.employee.controller import EmployeeController
-from src.core.users.depends import get_user_service
+from src.apps.users.depends import get_user_service
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
-    from src.core.users.manager import UserService
+    from src.apps.users.service import UserService
     from src.apps.company.service import CompanyService
 
 

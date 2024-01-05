@@ -8,7 +8,7 @@ from pydantic import EmailStr
 from src.apps.roles.schemas import RoleOut
 
 
-class UserRead(schemas.BaseUser[int]):
+class UserOut(schemas.BaseUser[int]):
     id: models.ID
     email: EmailStr
     joined_at: datetime
@@ -22,7 +22,7 @@ class UserRead(schemas.BaseUser[int]):
     roles: Optional[list[RoleOut]] = None
 
 
-class UserCreate(schemas.BaseUserCreate):
+class UserIn(schemas.BaseUserCreate):
     email: EmailStr
     password: str
     is_active: Optional[bool] = True

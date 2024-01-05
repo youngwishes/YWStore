@@ -14,8 +14,8 @@ from src.core.http_response_schemas import (
     Unauthorized,
     UniqueConstraint,
 )
-from src.core.users.auth import superuser
-from src.core.users.models import User
+from src.core.auth.strategy import get_superuser
+from src.apps.users.models import User
 
 if TYPE_CHECKING:
     from src.apps.employee.controller import EmployeeController
@@ -74,7 +74,7 @@ async def delete_employee(
     user_pk: int,
     company_pk: int,
     controller: EmployeeController = Depends(get_employee_controller),
-    _: User = Depends(superuser),
+    _: User = Depends(get_superuser),
 ):
     await controller.delete_from_company_by_pk(company_pk=company_pk, user_pk=user_pk)
 
@@ -96,7 +96,7 @@ async def update_employee_partially(
     company_pk: int,
     employee: EmployeeOptional,
     controller: EmployeeController = Depends(get_employee_controller),
-    _: User = Depends(superuser),
+    _: User = Depends(get_superuser),
 ) -> EmployeeOut:
     return await controller.update(
         user_pk=user_pk,

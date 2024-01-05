@@ -6,9 +6,9 @@ from fastapi import status
 from sqlalchemy import select
 
 from src.apps.roles.enums import CompanyRoles
-from src.core.users.models import User
+from src.apps.users.models import User
 from src.main import app
-from src.permissions.utils import is_member
+from src.core.utils import is_member
 from src.tests.helpers import (
     get_objects_count,
     get_object,

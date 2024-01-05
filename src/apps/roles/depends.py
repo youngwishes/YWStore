@@ -3,13 +3,13 @@ from typing import TYPE_CHECKING
 from fastapi import Depends
 
 from src.apps.roles.controller import RoleController
-from src.core.users.depends import get_session, get_user_service
+from src.apps.users.depends import get_session, get_user_service
 from src.apps.roles.repository import RoleRepository
 from src.apps.roles.service import RoleService
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
-    from src.core.users.manager import UserService
+    from src.apps.users.service import UserService
 
 
 async def _user_role_repository(

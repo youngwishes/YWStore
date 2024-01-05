@@ -29,9 +29,9 @@ class CompanyRepository(IRepository):
 
     async def create(self, in_model: CompanyIn) -> Company:
         company = self.model(
-            **in_model.model_dump(),  # type: ignore[call-arg]
-            rating=None,  # type: ignore[call-arg]
-            updated_at=datetime.now(),  # type: ignore[call-arg]
+            **in_model.model_dump(),
+            rating=None,
+            updated_at=datetime.now(),
         )
         self._session.add(company)
         await self._session.commit()

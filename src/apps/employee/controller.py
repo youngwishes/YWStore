@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Sequence
 if TYPE_CHECKING:
     from src.apps.employee.service import EmployeeService
     from src.apps.company.service import CompanyService
-    from src.core.users.manager import UserService
+    from src.apps.users.service import UserService
     from src.apps.employee.schemas import EmployeeIn, EmployeeOptional
     from src.apps.employee.models import Employee
 
