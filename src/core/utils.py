@@ -3,7 +3,6 @@ from typing import Optional, Any
 from copy import deepcopy
 from pydantic import BaseModel, create_model
 from pydantic.fields import FieldInfo
-from src.apps.users.models import User
 from src.core.config import get_settings
 
 settings = get_settings()
@@ -35,7 +34,3 @@ def optional(cls: type[BaseModel]) -> type[BaseModel]:
         __module__=cls.__module__,
         **fields_in_partial_mode,
     )
-
-
-async def is_member(user: User, role: str) -> bool:
-    return role in user.roles_set

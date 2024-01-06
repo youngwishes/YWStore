@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import status
-from src.core.exceptions import UniqueConstraintError
+from src.core.exceptions import UniqueConstraintError, IsOwnerError
 from src.core.interfaces import IService
 from typing import TYPE_CHECKING, Sequence
 
@@ -32,6 +32,7 @@ class EmployeeService(IService):
         data: EmployeeIn | EmployeeOptional,
         partial: bool = False,
     ) -> Employee:
+        await self._check_user_in_company(user_pk=user_pk, company_pk=company_pk)
         return await self._repo.update(
             user_pk=user_pk,
             company_pk=company_pk,
@@ -43,6 +44,7 @@ class EmployeeService(IService):
         return await self._repo.delete()
 
     async def delete_from_company_by_pk(self, user_pk: int, company_pk: int):
+        await self._check_user_in_company(user_pk=user_pk, company_pk=company_pk)
         return await self._repo.delete_from_company_by_pk(
             user_pk=user_pk,
             company_pk=company_pk,
@@ -60,4 +62,18 @@ class EmployeeService(IService):
             raise UniqueConstraintError(
                 detail="Пользователь уже состоит в компании",
                 status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+    async def _check_user_in_company(
+        self,
+        company_pk: int,
+        user_pk: int,
+    ) -> None:
+        if not await self._repo.check_user_already_in_company(
+            company_pk=company_pk,
+            user_pk=user_pk,
+        ):
+            raise IsOwnerError(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Пользователь не состоит в данной компании",
             )

@@ -11,7 +11,6 @@ from src.apps.company.models import Company
 from src.apps.employee.models import Employee
 from src.apps.roles.enums import CompanyRoles
 from src.apps.users.models import User
-from src.core.utils import is_member
 from src.main import app
 
 if TYPE_CHECKING:
@@ -39,7 +38,7 @@ async def test_add_new_employee(
     response = await any_employee_client.post(url, json=init_another_employee_data)
     await session.refresh(company)
     employees_count_after = len(company.employees)
-    if await is_member(create_test_user, CompanyRoles.ADMIN):
+    if create_test_user.is_member(CompanyRoles.ADMIN):
         assert response.status_code == status.HTTP_201_CREATED
         assert employees_count_before == employees_count_after - 1
     else:
@@ -61,7 +60,7 @@ async def test_get_company_employees(
         company_pk=active_employees[0].company_id,
     )
     response = await any_employee_client.get(url)
-    if await is_member(create_test_user, CompanyRoles.ADMIN):
+    if create_test_user.is_member(CompanyRoles.ADMIN):
         assert response.status_code == status.HTTP_200_OK
         for data in response.json():
             assert data["user"]["is_active"] is True

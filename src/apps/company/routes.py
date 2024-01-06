@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Body, status
 from src.apps.company.schemas import CompanyIn, CompanyOut, CompanyOptional
 from src.core.auth.strategy import get_superuser
 from src.apps.company.depends import get_company_controller
-from src.apps.roles.access import get_company_admin
+from src.core.auth.access import get_company_admin
 from src.core.http_response_schemas import (
     Unauthorized,
     UniqueConstraint,

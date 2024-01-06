@@ -29,7 +29,7 @@ async def get_company_admin(
     company_pk: int,
     current_user: User = Depends(get_current_user),
 ) -> User:
-    if current_user.employee.company_id != company_pk:
+    if not current_user.employee or current_user.employee.company_id != company_pk:
         raise IsOwnerError(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Вы не имеете доступа к данной компании.",
@@ -47,7 +47,10 @@ async def get_company_admin_post_query(
     employee: EmployeeIn,
     current_user: User = Depends(get_current_user),
 ) -> User:
-    if current_user.employee.company_id != employee.company_id:
+    if (
+        not current_user.employee
+        or current_user.employee.company_id != employee.company_id
+    ):
         raise IsOwnerError(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Вы не имеете доступа к данной компании.",
