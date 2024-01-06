@@ -62,12 +62,11 @@ class EmployeeRepository(IRepository):
             update(self.model)
             .returning(self.model)
             .where(self.model.user_id == user_pk, self.model.company_id == company_pk)
-            .values(
-                **data.model_dump(exclude_none=partial),
-            ),
+            .values(**data.model_dump(exclude_none=partial))
+            .options(selectinload(Employee.user)),
         )
         await self._session.commit()
-        return updated_employee.unique().scalar_one()
+        return updated_employee.unique().scalar_one_or_none()
 
     async def create(self, in_model: EmployeeIn) -> Employee:
         new_employee = self.model(**in_model.model_dump())  # type: ignore[call-arg]

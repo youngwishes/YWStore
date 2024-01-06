@@ -8,7 +8,6 @@ from sqlalchemy import select
 from src.apps.roles.enums import CompanyRoles
 from src.apps.users.models import User
 from src.main import app
-from src.core.utils import is_member
 from src.tests.helpers import (
     get_objects_count,
     get_object,
@@ -72,7 +71,7 @@ async def test_update_company(
     url = app.url_path_for("update_company", company_pk=create_test_company.id)
     response = await any_employee_client.put(url, json=update_company_data)
     obj = await get_object(Company, session)
-    if await is_member(create_test_user, CompanyRoles.ADMIN):
+    if create_test_user.is_member(CompanyRoles.ADMIN):
         assert response.status_code == status.HTTP_200_OK
         assert await check_object_data(obj, update_company_data)
     else:
@@ -95,7 +94,7 @@ async def test_partially_update_company(
     )
     response = await any_employee_client.patch(url, json=update_partial_company_data)
     obj = await get_object(Company, session)
-    if await is_member(create_test_user, CompanyRoles.ADMIN):
+    if create_test_user.is_member(CompanyRoles.ADMIN):
         assert response.status_code == status.HTTP_200_OK
         assert await check_object_data(obj, update_partial_company_data)
     else:

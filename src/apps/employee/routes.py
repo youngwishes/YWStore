@@ -8,7 +8,7 @@ from src.apps.employee.schemas import (
     EmployeeOut,
     EmployeeOptional,
 )
-from src.apps.roles.access import (
+from src.core.auth.access import (
     get_company_admin,
     get_current_employee,
     get_company_admin_post_query,
