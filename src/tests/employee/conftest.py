@@ -16,13 +16,13 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def init_employee_data(
+def init_another_employee_data(
     create_test_company: Company,
-    create_test_user: User,
+    create_another_test_user: User,
 ):
     return {
         "company_id": create_test_company.id,
-        "user_id": create_test_user.id,
+        "user_id": create_another_test_user.id,
         "vk": "string",
         "telegram": "string",
         "extra_data": "string",

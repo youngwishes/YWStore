@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, Body, status
 from src.apps.company.schemas import CompanyIn, CompanyOut, CompanyOptional
 from src.core.auth.strategy import get_superuser
 from src.apps.company.depends import get_company_controller
-from src.core.exceptions import IsOwnerError
 from src.apps.roles.access import get_company_admin
 from src.core.http_response_schemas import (
     Unauthorized,
@@ -119,13 +118,8 @@ async def update_company(
     company_pk: int,
     company: CompanyIn,
     controller: CompanyController = Depends(get_company_controller),
-    admin: User = Depends(get_company_admin),
+    _: User = Depends(get_company_admin),
 ) -> CompanyOut:
-    if not admin.employee.company_id == company_pk:
-        raise IsOwnerError(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Вы не имеете доступа к данной компании.",
-        )
     return await controller.update(company_pk=company_pk, data=company, partial=False)
 
 
@@ -142,13 +136,8 @@ async def update_company_partially(
     company_pk: int,
     company: CompanyOptional,
     controller: CompanyController = Depends(get_company_controller),
-    admin: User = Depends(get_company_admin),
+    _: User = Depends(get_company_admin),
 ) -> CompanyOut:
-    if not admin.employee.company_id == company_pk:
-        raise IsOwnerError(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Вы не имеете доступа к данной компании.",
-        )
     return await controller.update(company_pk=company_pk, data=company, partial=True)
 
 

@@ -8,13 +8,17 @@ from src.apps.employee.schemas import (
     EmployeeOut,
     EmployeeOptional,
 )
+from src.apps.roles.access import (
+    get_company_admin,
+    get_current_employee,
+    get_company_admin_post_query,
+)
 from src.core.http_response_schemas import (
     NotFound,
     NotAllowed,
     Unauthorized,
     UniqueConstraint,
 )
-from src.core.auth.strategy import get_superuser
 from src.apps.users.models import User
 
 if TYPE_CHECKING:
@@ -39,6 +43,7 @@ employee_router = APIRouter()
 async def add_employee(
     employee: EmployeeIn,
     controller: EmployeeController = Depends(get_employee_controller),
+    _: User = Depends(get_company_admin_post_query),
 ) -> EmployeeOut:
     return await controller.create(in_model=employee)
 
@@ -57,6 +62,7 @@ async def add_employee(
 async def get_employees(
     company_pk: int,
     controller: EmployeeController = Depends(get_employee_controller),
+    _: User = Depends(get_company_admin),
 ) -> Sequence[Employee]:
     return await controller.get(company_pk=company_pk)
 
@@ -74,7 +80,7 @@ async def delete_employee(
     user_pk: int,
     company_pk: int,
     controller: EmployeeController = Depends(get_employee_controller),
-    _: User = Depends(get_superuser),
+    _: User = Depends(get_company_admin),
 ):
     await controller.delete_from_company_by_pk(company_pk=company_pk, user_pk=user_pk)
 
@@ -96,7 +102,7 @@ async def update_employee_partially(
     company_pk: int,
     employee: EmployeeOptional,
     controller: EmployeeController = Depends(get_employee_controller),
-    _: User = Depends(get_superuser),
+    _: User = Depends(get_current_employee),
 ) -> EmployeeOut:
     return await controller.update(
         user_pk=user_pk,

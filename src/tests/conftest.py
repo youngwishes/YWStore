@@ -175,6 +175,19 @@ async def create_test_user(
 
 
 @pytest.fixture
+async def create_another_test_user(
+    session: AsyncSession,
+    get_test_user_data: dict,
+    get_test_user_service: UserService,
+) -> User:
+    new_user_data = copy(get_test_user_data)
+    new_user_data["email"] = new_user_data["email"] + "another"
+    create_user_schema = UserIn(**new_user_data)
+    user = await get_test_user_service.create(create_user_schema)
+    return user
+
+
+@pytest.fixture
 def init_employee_data(
     create_test_company: Company,
     create_test_user: User,

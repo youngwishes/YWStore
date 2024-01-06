@@ -94,7 +94,7 @@ async def test_delete_user_by_authorized(
     create_test_user: User,
     session: AsyncSession,
 ):
-    "Тест на удаление пользователя от имени авторизированного пользователя"
+    """Тест на удаление пользователя от имени авторизированного пользователя"""
     users_count_before = await get_objects_count(User, session)
 
     url = app.url_path_for("user_delete")
