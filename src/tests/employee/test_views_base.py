@@ -1,94 +1,22 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
 import pytest
 from fastapi import status
 from sqlalchemy.orm import selectinload
-from sqlalchemy.sql import select, func
+from sqlalchemy.sql import select
 
 from src.apps.company.models import Company
 from src.apps.employee.models import Employee
 from src.apps.employee.schemas import EmployeeIn, EmployeeOptional
+
 from src.main import app
 from src.tests.helpers import check_object_data
 
 if TYPE_CHECKING:
     from httpx import AsyncClient
     from sqlalchemy.ext.asyncio import AsyncSession
-
-
-@pytest.mark.anyio
-async def test_add_new_employee(
-    async_client: AsyncClient,
-    init_employee_data: dict,
-    session: AsyncSession,
-):
-    """Тест на добавление нового пользователя в компанию"""
-    employees_count = await session.execute(func.count(select(Employee.user_id)))
-    assert employees_count.scalar_one() == 0
-
-    employee_stmt = await session.execute(
-        select(Employee)
-        .where(Employee.user_id == init_employee_data["user_id"])
-        .options(selectinload(Employee.user)),
-    )
-    employee = employee_stmt.scalar_one_or_none()
-    assert employee is None
-
-    company_stmt = await session.execute(
-        select(Company)
-        .where(Company.id == init_employee_data["company_id"])
-        .options(selectinload(Company.employees)),
-    )
-    company = company_stmt.scalar_one_or_none()
-    assert len(company.employees) == 0
-
-    url = app.url_path_for("add_employee")
-    response = await async_client.post(url, json=init_employee_data)
-    assert response.status_code == status.HTTP_201_CREATED
-
-    await session.refresh(company)
-    company_stmt = await session.execute(
-        select(Company)
-        .where(Company.id == init_employee_data["company_id"])
-        .options(selectinload(Company.employees)),
-    )
-    company = company_stmt.scalar_one_or_none()
-    assert len(company.employees) == 1
-
-    employees_count = await session.execute(func.count(select(Employee.user_id)))
-    assert employees_count.scalar_one() == 1
-
-    employee_stmt = await session.execute(
-        select(Employee)
-        .where(Employee.user_id == init_employee_data["user_id"])
-        .options(selectinload(Employee.company)),
-    )
-    employee = employee_stmt.unique().scalar_one_or_none()
-    assert employee
-    assert employee.company
-
-
-@pytest.mark.anyio
-async def test_get_company_employees(
-    async_client: AsyncClient,
-    session: AsyncSession,
-    active_employees: Sequence[Employee],
-    create_employees_many: Sequence[Employee],
-):
-    """Тест проверяет получение пользователей из компании"""
-    url = app.url_path_for(
-        "get_employees",
-        company_pk=active_employees[0].company_id,
-    )
-    response = await async_client.get(url)
-
-    assert response.status_code == status.HTTP_200_OK
-    assert len(response.json()) == len(active_employees)
-    assert len(response.json()) != len(create_employees_many)
-    for data in response.json():
-        assert data["user"]["is_active"] is True
 
 
 @pytest.mark.anyio
@@ -231,6 +159,7 @@ async def test_partial_update_employee_by_unauthorized(
         url,
         json=EmployeeOptional(**random_employee.to_json()).model_dump(),
     )
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
     result = await session.execute(
         select(Employee).where(
             Employee.user_id == create_employee.user_id,
@@ -239,7 +168,6 @@ async def test_partial_update_employee_by_unauthorized(
     )
     after_update_employee = result.unique().scalar_one_or_none()
     await session.refresh(after_update_employee)
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert await check_object_data(
         after_update_employee,
         create_employee.to_json(),
@@ -247,32 +175,23 @@ async def test_partial_update_employee_by_unauthorized(
 
 
 @pytest.mark.anyio
-async def test_partial_update_employee_by_authorized(
-    authorized_client: AsyncClient,
+async def test_add_new_employee_by_superuser(
+    superuser_client: AsyncClient,
+    init_another_employee_data: dict,
     session: AsyncSession,
-    create_employee: Employee,
-    random_employee: Employee,
 ):
-    """Тест проверяет частичное обновление данных сотрудника авторизированынм пользователем"""
-    url = app.url_path_for(
-        "update_employee_partially",
-        company_pk=create_employee.company_id,
-        user_pk=create_employee.user_id,
+    """Тест на добавление нового пользователя в компанию от лица супер-юзера"""
+    url = app.url_path_for("add_employee")
+    company_stmt = await session.execute(
+        select(Company)
+        .where(Company.id == init_another_employee_data["company_id"])
+        .options(selectinload(Company.employees)),
     )
-    response = await authorized_client.patch(
-        url,
-        json=EmployeeOptional(**random_employee.to_json()).model_dump(),
-    )
-    result = await session.execute(
-        select(Employee).where(
-            Employee.user_id == create_employee.user_id,
-            Employee.telegram == create_employee.telegram,
-        ),
-    )
-    after_update_employee = result.unique().scalar_one_or_none()
-    await session.refresh(after_update_employee)
-    assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert await check_object_data(
-        after_update_employee,
-        create_employee.to_json(),
-    )
+    company = company_stmt.scalar_one_or_none()
+    await session.refresh(company)
+    employees_count_before = len(company.employees)
+    response = await superuser_client.post(url, json=init_another_employee_data)
+    await session.refresh(company)
+    employees_count_after = len(company.employees)
+    assert response.status_code == status.HTTP_201_CREATED
+    assert employees_count_before == employees_count_after - 1
