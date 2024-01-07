@@ -31,12 +31,18 @@ class PGSettings(YWStoreBaseSettings):
         return f"{self.POSTGRES_DRIVER}://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}/{self.POSTGRES_DB}"
 
 
+class RedisSettings(YWStoreBaseSettings):
+    REDIS_HOST: str = Field("ywstore-redis", title="Redis host name")
+    REDIS_PORT: int = Field(6379, title="Redis connection port")
+
+
 class YWStoreSettings(YWStoreBaseSettings):
     SECRET_KEY: str = secrets.token_urlsafe(32)
     ACCESS_TOKEN_EXPIRE_SECONDS: int = 60 * 60
     SQL_ECHO: bool = True
     DEBUG: bool = Field(True)
     postgres: PGSettings = PGSettings()
+    redis: RedisSettings = RedisSettings()
 
 
 def get_settings(db_only=False) -> Union[PGSettings, YWStoreSettings]:

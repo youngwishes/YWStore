@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 from copy import copy
 from typing import AsyncGenerator, TYPE_CHECKING, Sequence
 
+import aioredis
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
 import pytest
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from httpx import AsyncClient
@@ -27,8 +31,11 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncEngine
     from src.main import YWStoreAPI
 
-settings = get_settings(db_only=True)
-async_engine_main = create_async_engine(settings.sqlalchemy_db_uri, poolclass=NullPool)
+settings = get_settings()
+async_engine_main = create_async_engine(
+    settings.postgres.sqlalchemy_db_uri,
+    poolclass=NullPool,
+)
 async_engine_test = create_async_engine(defaults.SQLALCHEMY_DATABASE_TEST_URI)
 
 
@@ -71,15 +78,35 @@ def test_app(async_session_class: sessionmaker[AsyncSession]) -> YWStoreAPI:
     return app
 
 
+@pytest.fixture(scope="session")
+def event_loop(request):
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="session")
+async def init_redis():
+    redis = aioredis.from_url(
+        f"redis://{settings.redis.REDIS_HOST}:{settings.redis.REDIS_PORT}",
+        encoding="utf-8",
+        decode_responses=True,
+    )
+    FastAPICache.init(RedisBackend(redis), prefix="ywstore-cache")
+    return FastAPICache
+
+
 @pytest.fixture(scope="function", autouse=True)
 async def session(
     async_session_class: sessionmaker[AsyncSession],
+    init_redis: FastAPICache,
 ) -> AsyncGenerator[AsyncSession, None]:
     async with async_session_class() as session:
         yield session
         for table in reversed(Base.metadata.sorted_tables):
             await session.execute(text(f"TRUNCATE {table.name} CASCADE;"))
         await session.commit()
+    await FastAPICache.clear(namespace="ywstore-cache")
 
 
 @pytest.fixture

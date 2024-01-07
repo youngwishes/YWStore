@@ -8,6 +8,7 @@ from src.apps.roles.depends import get_role_controller
 from src.core.http_response_schemas import NotFound, Unauthorized, NotAllowed
 from src.core.auth.strategy import get_superuser, get_current_user
 from src.apps.users.schemas import UserOut
+from fastapi_cache.decorator import cache
 
 if TYPE_CHECKING:
     from src.apps.users.models import Role, User
@@ -78,6 +79,7 @@ async def delete_roles(
         status.HTTP_401_UNAUTHORIZED: {"model": Unauthorized},
     },
 )
+@cache(expire=60 * 60)
 async def get_roles(
     controller: RoleController = Depends(get_role_controller),
     _: User = Depends(get_current_user),

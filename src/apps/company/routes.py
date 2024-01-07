@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 from fastapi import APIRouter, Depends, Body, status
-
+from fastapi_cache.decorator import cache
 from src.apps.company.schemas import CompanyIn, CompanyOut, CompanyOptional
 from src.core.auth.strategy import get_superuser
 from src.apps.company.depends import get_company_controller
@@ -47,6 +47,7 @@ async def register_company(
     status_code=status.HTTP_200_OK,
     responses={status.HTTP_200_OK: {"model": Sequence[CompanyOut]}},
 )
+@cache(expire=60 * 60)
 async def companies_list(
     controller: CompanyController = Depends(get_company_controller),
 ) -> Sequence[CompanyOut]:
@@ -80,6 +81,7 @@ async def delete_companies(
         status.HTTP_404_NOT_FOUND: {"model": NotFound},
     },
 )
+@cache(expire=60 * 60)
 async def company_detail(
     company_pk: int,
     controller: CompanyController = Depends(get_company_controller),

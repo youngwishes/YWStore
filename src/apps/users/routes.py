@@ -5,6 +5,7 @@ from src.core.auth.strategy import get_current_user
 from src.apps.users.depends import get_user_controller
 from src.apps.users.models import User
 from src.apps.users.schemas import UserIn, UserOut, UserUpdate
+from fastapi_cache.decorator import cache
 
 users_router = APIRouter()
 
@@ -71,6 +72,7 @@ async def user_edit(
     },
     response_model=UserOut,
 )
+@cache(expire=60 * 60)
 async def get_user(
     controller: UserController = Depends(get_user_controller),
     user: User = Depends(get_current_user),

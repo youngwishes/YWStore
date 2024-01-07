@@ -34,3 +34,10 @@ services:
       - ./postgres-data:/var/lib/postgresql/data
       - ${DUMP_DIR}:/tmp/dumps
       - ${DUMP_DIR}/${DB_DUMP}:/docker-entrypoint-initdb.d/00dump.sql
+
+  ywstore-redis:
+      image: redis
+      container_name: ywstore-redis
+      restart: unless-stopped
+      expose:
+        - 6379
