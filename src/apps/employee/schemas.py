@@ -20,7 +20,7 @@ class EmployeeIn(BaseEmployee):
 
 
 class EmployeeOut(BaseEmployee):
-    user: UserOut
+    user: UserOut = Field(...)
 
 
 @optional

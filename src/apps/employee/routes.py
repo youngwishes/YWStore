@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Sequence, TYPE_CHECKING
 from fastapi import APIRouter, status, Depends
 from src.apps.employee.depends import get_employee_controller
-from src.apps.employee.models import Employee
 from src.apps.employee.schemas import (
     EmployeeIn,
     EmployeeOut,
@@ -63,7 +62,7 @@ async def get_employees(
     company_pk: int,
     controller: EmployeeController = Depends(get_employee_controller),
     _: User = Depends(get_company_admin),
-) -> Sequence[Employee]:
+) -> Sequence[EmployeeOut]:
     return await controller.get(company_pk=company_pk)
 
 

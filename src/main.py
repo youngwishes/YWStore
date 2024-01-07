@@ -1,4 +1,9 @@
+from contextlib import asynccontextmanager
+import aioredis
+from fastapi_cache import FastAPICache
 from fastapi import FastAPI
+from fastapi_cache.backends.redis import RedisBackend
+
 from src.core.auth.strategy import (
     auth_router,
     register_router,
@@ -34,6 +39,18 @@ class YWStoreAPI(FastAPI):
         self.router.prefix = settings.BASE_API_PREFIX
 
 
+@asynccontextmanager
+async def lifespan(app: YWStoreAPI):
+    redis = aioredis.from_url(
+        f"redis://{settings.redis.REDIS_HOST}:{settings.redis.REDIS_PORT}",
+        encoding="utf-8",
+        decode_responses=True,
+    )
+    FastAPICache.init(RedisBackend(redis), prefix="ywstore-cache")
+    yield
+    await redis.close()
+
+
 app = YWStoreAPI(
     debug=settings.DEBUG,
     description=description,
@@ -45,6 +62,7 @@ app = YWStoreAPI(
         "url": "https://t.me/youngWishes",
         "email": "mysc1@yandex.ru",
     },
+    lifespan=lifespan,
 )
 
 app.include_router(auth_router, tags=["auth"], prefix="/auth/jwt")
