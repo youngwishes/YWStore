@@ -3,7 +3,7 @@ import aioredis
 from fastapi_cache import FastAPICache
 from fastapi import FastAPI
 from fastapi_cache.backends.redis import RedisBackend
-
+from src.core.sql.database import engine
 from src.core.auth.strategy import (
     auth_router,
     register_router,
@@ -49,6 +49,8 @@ async def lifespan(app: YWStoreAPI):
     FastAPICache.init(RedisBackend(redis), prefix="ywstore-cache")
     yield
     await redis.close()
+    await engine.clear_compiled_cache()
+    await engine.dispose()
 
 
 app = YWStoreAPI(
@@ -57,12 +59,12 @@ app = YWStoreAPI(
     title=settings.PROJECT_NAME,
     docs_url=settings.BASE_API_PREFIX + "/docs",
     version=str(settings.API_VERSION_INT) + ".0",
+    lifespan=lifespan,
     contact={
         "name": "Danil Fedorov",
         "url": "https://t.me/youngWishes",
         "email": "mysc1@yandex.ru",
     },
-    lifespan=lifespan,
 )
 
 app.include_router(auth_router, tags=["auth"], prefix="/auth/jwt")
