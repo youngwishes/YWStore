@@ -4,8 +4,7 @@
 <img src="https://github.com/youngwishes/fastapi-kafka/assets/92817776/e27bcc09-b947-4b27-88b4-94c6922eecfb" width="50" height="50"/>
 <img src="https://github.com/youngwishes/fastapi-kafka/assets/92817776/a9d9c54f-124d-425e-8691-ef11bf131d46" width="50" height="50"/>
 <img src="https://github.com/youngwishes/fastapi-kafka/assets/92817776/a824c8aa-89cb-4d22-9706-c2a5affb98a0" width="50" height="50"/>
-
-![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
+<img src="https://github.com/youngwishes/kafka-microservices/assets/92817776/3f937b95-4cd0-4b9d-acbf-8f5b0764085f" width="50" height="50"/>
 
 ## Project status - IN WORK ⚙️
 Current version exists:
