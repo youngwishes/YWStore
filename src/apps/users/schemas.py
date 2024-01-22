@@ -1,0 +1,45 @@
+from datetime import datetime
+from typing import Optional
+
+from fastapi_users import models
+from fastapi_users import schemas
+from pydantic import EmailStr
+
+from src.apps.roles.schemas import RoleOut
+
+
+class UserOut(schemas.BaseUser[int]):
+    id: models.ID
+    email: EmailStr
+    joined_at: datetime
+    is_active: bool = True
+    is_superuser: bool = False
+    is_verified: bool = False
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    last_login: Optional[datetime] = None
+    roles: Optional[list[RoleOut]] = None
+
+
+class UserIn(schemas.BaseUserCreate):
+    email: EmailStr
+    password: str
+    is_active: Optional[bool] = True
+    is_superuser: Optional[bool] = False
+    is_verified: Optional[bool] = False
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    middle_name: Optional[str] = None
+
+
+class UserUpdate(schemas.BaseUserUpdate):
+    password: Optional[str] = None
+    email: Optional[EmailStr] = None
+    is_active: Optional[bool] = None
+    is_superuser: Optional[bool] = None
+    is_verified: Optional[bool] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    last_login: Optional[datetime] = None
